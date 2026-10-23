@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Libri Commissioni · Admin</title>
+<meta name="theme-color" content="#0b3f3d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: mobile-first column (max 600px). Home = list of people; tapping one opens their own sheet (scheda) with months and dated payments. */
+:root{
+  --bg:#edf3f1; --surface:#ffffff; --surface-2:#e2ebe8; --line:#d0dcd8;
+  --fg:#0c1e1c; --muted:#566b67;
+  --brand:#0d6560; --brand-fg:#ffffff; --brand-soft:#d5ece8;
+  --hero-1:#0a3a37; --hero-2:#11726a; --hero-fg:#ffffff; --hero-muted:rgba(255,255,255,.75);
+  --gold:#f5a524; --gold-soft:#fdeed2; --gold-ink:#8f5400;
+  --part:#2f6fdc; --part-soft:#dde8fc;
+  --ok:#0f8a57; --ok-soft:#d6f2e4; --danger:#c43d32;
+  --av1:#f08a5d; --av2:#5b8def; --av3:#c46bd6; --av4:#e2b33a; --av5:#3bb3a0;
+  --shadow:0 1px 2px rgba(12,30,28,.06),0 6px 20px rgba(12,30,28,.06);
+  --f-display:"Unbounded",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#071110; --surface:#0f1c1b; --surface-2:#172826; --line:#223633;
+  --fg:#e4f0ed; --muted:#8ba39e;
+  --brand:#3cc3b6; --brand-fg:#03201d; --brand-soft:#123532;
+  --hero-1:#0c3936; --hero-2:#15776e;
+  --gold:#ffbd48; --gold-soft:#36290f; --gold-ink:#ffcf7d;
+  --part:#7fa8ff; --part-soft:#16264a;
+  --ok:#4bd69c; --ok-soft:#0f3325; --danger:#ff7b70;
+  --av1:#f59a72; --av2:#7aa3f5; --av3:#d488e2; --av4:#ecc35a; --av5:#55c8b5;
+  --shadow:0 1px 2px rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#071110; --surface:#0f1c1b; --surface-2:#172826; --line:#223633;
+  --fg:#e4f0ed; --muted:#8ba39e;
+  --brand:#3cc3b6; --brand-fg:#03201d; --brand-soft:#123532;
+  --hero-1:#0c3936; --hero-2:#15776e;
+  --gold:#ffbd48; --gold-soft:#36290f; --gold-ink:#ffcf7d;
+  --part:#7fa8ff; --part-soft:#16264a;
+  --ok:#4bd69c; --ok-soft:#0f3325; --danger:#ff7b70;
+  --av1:#f59a72; --av2:#7aa3f5; --av3:#d488e2; --av4:#ecc35a; --av5:#55c8b5;
+  --shadow:0 1px 2px rgba(0,0,0,.35); color-scheme:dark}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.45;padding-bottom:40px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.num{font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:disabled{cursor:default;opacity:.5}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:8px}
+svg{flex:none}
+.gutter{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.col{max-width:600px;margin:0 auto}
+
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.topbar .col{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px;min-height:62px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:700;font-size:1rem;letter-spacing:-.01em;min-width:0}
+.logo{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--hero-2),var(--hero-1));display:grid;place-items:center;color:var(--gold)}
+.logo svg{width:19px;height:19px}
+.back{width:40px;height:40px;border-radius:12px;background:var(--surface);box-shadow:var(--shadow);display:grid;place-items:center}
+.back svg{width:22px;height:22px}
+.sync{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted);font-weight:600;white-space:nowrap}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.sync.on i{background:var(--ok)} .sync.err i{background:var(--danger)}
+
+main.col{display:grid;gap:14px;padding-block:4px 16px}
+h2{font-family:var(--f-display);font-weight:700;font-size:1.05rem;margin:0;letter-spacing:-.01em}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:6px}
+.link{color:var(--brand);font-weight:700;font-size:.92rem;padding:8px 2px}
+.card{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+
+.av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.9rem;color:#fff;flex:none}
+.av.lg{width:52px;height:52px;font-size:1.1rem}
+.av.xl{width:64px;height:64px;font-size:1.35rem;box-shadow:0 0 0 3px rgba(255,255,255,.25)}
+.rate{font-size:.72rem;font-weight:800;background:var(--brand-soft);color:var(--brand);border-radius:6px;padding:1px 6px}
+
+/* people list */
+.people{display:grid;gap:10px}
+.person{display:flex;align-items:center;gap:14px;padding:14px 14px 14px 16px;text-align:left;width:100%;background:var(--surface);border-radius:20px;box-shadow:var(--shadow);min-height:80px}
+.person:active{transform:scale(.99)}
+.person .t{flex:1;min-width:0;display:grid;gap:4px}
+.person .name{font-weight:800;font-size:1.08rem;display:flex;align-items:center;gap:7px}
+.person .sub{font-size:.84rem;color:var(--muted)}
+.person .go{color:var(--muted)}
+.person.off{opacity:.65}
+
+.tag{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 10px;font-weight:800;font-size:.76rem;white-space:nowrap;justify-self:start}
+.tag svg{width:13px;height:13px}
+.tag.paid{background:var(--ok-soft);color:var(--ok)}
+.tag.due{background:var(--gold-soft);color:var(--gold-ink)}
+.tag.part{background:var(--part-soft);color:var(--part)}
+
+/* scheda header */
+.head{border-radius:24px;padding:20px;color:var(--hero-fg);background:radial-gradient(120% 140% at 100% 0%,var(--hero-2) 0%,var(--hero-1) 62%);position:relative;overflow:hidden;display:grid;gap:16px}
+.head::after{content:"";position:absolute;right:-46px;top:-46px;width:170px;height:170px;border-radius:50%;border:26px solid rgba(255,189,72,.15);pointer-events:none}
+.head-top{display:flex;align-items:center;gap:14px;position:relative;z-index:1}
+.head-top .t{min-width:0}
+.head .name{font-family:var(--f-display);font-weight:700;font-size:1.45rem;letter-spacing:-.02em;line-height:1.15}
+.head .sub{color:var(--hero-muted);font-size:.9rem;margin-top:2px}
+.head-actions{display:flex;gap:8px;flex-wrap:wrap;position:relative;z-index:1}
+.hbtn{height:38px;padding:0 12px;border-radius:12px;background:rgba(255,255,255,.14);color:var(--hero-fg);font-weight:700;font-size:.86rem;display:inline-flex;align-items:center;gap:6px}
+.hbtn svg{width:16px;height:16px}
+.hbtn.on{background:rgba(159,240,200,.22)}
+
+/* month card */
+.month{padding:16px;display:grid;gap:12px}
+.m-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.m-name{font-family:var(--f-display);font-weight:700;font-size:1.02rem;letter-spacing:-.01em}
+.figs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fig{background:var(--bg);border-radius:14px;padding:10px 12px;min-width:0}
+.fig .k{font-size:.7rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.fig .v{font-weight:800;font-size:1rem;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fig.res .v{color:var(--gold-ink)}
+.fig.res.zero .v{color:var(--ok)}
+.auto{font-size:.62rem;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:0 4px;vertical-align:2px;margin-left:3px}
+.bar{height:6px;border-radius:6px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);border-radius:6px}
+.pays{display:grid;gap:0;border-top:1px solid var(--line)}
+.pay{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.92rem}
+.pay:last-child{border-bottom:0}
+.pay .d{flex:1;min-width:0;color:var(--muted);font-weight:600}
+.pay .d small{display:block;font-weight:500;font-size:.78rem}
+.pay .a{font-weight:800}
+.pay .x{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--muted)}
+.pay .x svg{width:16px;height:16px}
+.pay .x.armed{background:var(--danger);color:var(--surface);width:auto;padding:0 10px;font-weight:700;font-size:.8rem}
+.no-pay{font-size:.86rem;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+.m-actions{display:grid;grid-template-columns:1fr 1fr auto;gap:8px}
+
+.btn{height:44px;padding:0 14px;border-radius:12px;font-weight:700;background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:.9rem;white-space:nowrap}
+.btn.primary{background:var(--brand);color:var(--brand-fg)}
+.btn.ok{background:var(--ok);color:var(--surface)}
+.btn.gold{background:var(--gold);color:#2a1a00}
+.btn.danger{color:var(--danger);background:transparent}
+.btn.danger.armed{background:var(--danger);color:var(--surface)}
+.btn.block{width:100%}
+.btn.icon{width:44px;padding:0}
+.btn svg{width:18px;height:18px}
+
+.notice{background:var(--gold-soft);border-radius:18px;padding:14px 16px;display:grid;gap:10px}
+.notice h3{margin:0;font-size:.95rem;color:var(--gold-ink)}
+.req{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.req .who{flex:1 1 100%;font-weight:700}
+.req .who small{display:block;font-weight:500;color:var(--muted);font-size:.78rem}
+select,input[type=text],input[type=password],input[type=number],input[type=date]{font:inherit;font-size:16px;height:48px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:12px;padding:0 12px;width:100%;min-width:0}
+.req select{flex:1;width:auto;height:40px}
+.req .btn{height:40px}
+details.help{background:var(--surface);border-radius:18px;padding:4px 16px;box-shadow:var(--shadow);font-size:.9rem;color:var(--muted)}
+details.help summary{cursor:pointer;font-weight:700;color:var(--fg);padding:12px 0;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.help summary::-webkit-details-marker{display:none}
+details.help ol{margin:0 0 14px;padding-left:20px;display:grid;gap:6px}
+.empty-state{padding:28px 20px;text-align:center;color:var(--muted)}
+.empty-state strong{display:block;color:var(--fg);font-size:1.05rem;margin-bottom:4px}
+.preview-bar{background:var(--fg);color:var(--bg);border-radius:14px;padding:8px 8px 8px 16px;display:flex;align-items:center;gap:10px;font-size:.88rem;font-weight:600}
+.preview-bar span{flex:1}
+.preview-bar button{background:var(--bg);color:var(--fg);border-radius:10px;height:36px;padding:0 14px;font-weight:700}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92rem;background:var(--surface-2);border-radius:12px;padding:12px;word-break:break-all;user-select:all}
+.muted{color:var(--muted);font-size:.86rem}
+
+dialog.sheet{border:0;padding:0;width:100%;max-width:520px;max-height:92vh;margin:auto auto 0;border-radius:26px 26px 0 0;background:var(--surface);color:var(--fg);box-shadow:0 -10px 40px rgba(0,0,0,.25)}
+dialog.sheet[open]{animation:up .24s cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+dialog.sheet::backdrop{background:rgba(4,14,13,.5)}
+@media (min-width:640px){dialog.sheet{margin:auto;border-radius:26px}}
+.sheet form,.sheet .body{padding:10px 20px calc(20px + env(safe-area-inset-bottom,0px));display:grid;gap:14px}
+.grab{width:40px;height:5px;border-radius:5px;background:var(--line);margin:10px auto 0}
+.sheet h3{font-family:var(--f-display);font-size:1.15rem;margin:4px 0 0;letter-spacing:-.01em}
+.sheet .sub{color:var(--muted);font-size:.88rem;margin-top:-8px}
+.field{display:grid;gap:6px;min-width:0}
+.field label{font-size:.82rem;font-weight:700;color:var(--muted)}
+.field .hint{font-size:.8rem;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quick{display:flex;gap:8px;flex-wrap:wrap}
+.quick button{height:34px;padding:0 12px;border-radius:999px;background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:.84rem}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--bg);border-radius:14px;padding:0 14px;height:54px;font-weight:700}
+.switch input{width:22px;height:22px;accent-color:var(--ok)}
+.sheet-actions{display:flex;gap:8px;align-items:center}
+.sheet-actions .grow{flex:1}
+
+.toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(16px);background:var(--fg);color:var(--bg);padding:11px 18px;border-radius:999px;font-weight:700;font-size:.9rem;opacity:0;pointer-events:none;transition:.2s;z-index:60;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (max-width:380px){.figs{grid-template-columns:1fr 1fr}.fig.res{grid-column:1/-1}.m-actions{grid-template-columns:1fr 1fr}.m-actions .icon{grid-column:1/-1;width:100%}}
+@media (prefers-reduced-motion:reduce){.toast,dialog.sheet[open]{transition:none;animation:none}}
+</style>
+
+</head>
+<body>
+
+<style>
+.pay{width:100%;text-align:left}
+.pay.edit:hover .d{color:var(--fg)}
+.pay .pen{color:var(--muted);display:grid;place-items:center}
+.pay .pen svg{width:15px;height:15px}
+.home-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bulk{display:grid;gap:8px}
+.bulk-row{display:flex;align-items:center;gap:12px}
+.bulk-row .n{flex:1;min-width:0;font-weight:700;display:flex;align-items:center;gap:10px}
+.bulk-row .n .av{width:32px;height:32px;font-size:.78rem}
+.bulk-row input{width:140px;flex:none}
+.bulk-row.has .n::after{content:"già inserito";font-size:.7rem;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:0 4px}
+.login{padding:20px;display:grid;gap:14px}
+.pw{display:flex;gap:8px}
+.pw input{flex:1}
+.cred{background:var(--bg);border-radius:14px;padding:12px 14px;display:grid;gap:4px;font-size:.92rem}
+.cred{display:grid}
+.cred b{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.logout{height:36px;padding:0 12px;border-radius:10px;background:var(--surface);box-shadow:var(--shadow);font-weight:700;font-size:.86rem}
+.err{color:var(--danger);font-weight:700;font-size:.9rem}
+</style>
+
+<header class="topbar gutter">
+  <div class="col">
+    <div class="brand" id="brand"></div>
+    <div class="sync" id="sync"><i></i><span>Caricamento…</span></div>
+  </div>
+</header>
+
+<main class="col gutter" id="view"></main>
+
+<dialog class="sheet" id="dlg-entry">
+  <div class="grab"></div>
+  <form id="f-entry">
+    <h3 id="e-title">Mese</h3>
+    <div class="sub" id="e-sub"></div>
+    <div class="field"><label for="e-month">Mese</label><select id="e-month"></select></div>
+    <div class="two">
+      <div class="field"><label for="e-sales">Vendite (€)</label><input type="text" inputmode="decimal" id="e-sales" placeholder="1.250,50" autocomplete="off"></div>
+      <div class="field"><label for="e-comm">Commissione (€)</label><input type="text" inputmode="decimal" id="e-comm" autocomplete="off"></div>
+    </div>
+    <div class="hint muted" id="e-hint"></div>
+    <div class="sheet-actions">
+      <button class="btn danger" type="button" id="e-del">Elimina mese</button>
+      <span class="grow"></span>
+      <button class="btn" type="button" data-close>Annulla</button>
+      <button class="btn primary" type="submit">Salva</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="sheet" id="dlg-bulk">
+  <div class="grab"></div>
+  <form id="f-bulk">
+    <h3>Nuovo mese</h3>
+    <div class="sub">Inserisci le vendite di tutti. Lascia vuoto chi non ha venduto.</div>
+    <div class="field"><label for="b-month">Mese</label><select id="b-month"></select></div>
+    <div class="bulk" id="b-rows"></div>
+    <div class="hint muted">La commissione viene calcolata da sola; potrai cambiarla dalla scheda di ognuno.</div>
+    <div class="sheet-actions"><span class="grow"></span>
+      <button class="btn" type="button" data-close>Annulla</button>
+      <button class="btn primary" type="submit">Salva mese</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="sheet" id="dlg-pay">
+  <div class="grab"></div>
+  <form id="f-pay">
+    <h3 id="y-title">Nuovo pagamento</h3>
+    <div class="sub" id="y-sub"></div>
+    <div class="two">
+      <div class="field"><label for="y-amount">Importo (€)</label><input type="text" inputmode="decimal" id="y-amount" autocomplete="off"></div>
+      <div class="field"><label for="y-date">Data</label><input type="date" id="y-date"></div>
+    </div>
+    <div class="quick" id="y-quick"></div>
+    <div class="sheet-actions">
+      <button class="btn danger" type="button" id="y-del">Elimina</button>
+      <span class="grow"></span>
+      <button class="btn" type="button" data-close>Annulla</button>
+      <button class="btn ok" type="submit">Salva</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="sheet" id="dlg-person">
+  <div class="grab"></div>
+  <form id="f-person">
+    <h3 id="p-title">Persona</h3>
+    <div class="field"><label for="p-name">Nome</label><input type="text" id="p-name" autocomplete="off" required></div>
+    <div class="field"><label for="p-rate">Percentuale commissione (%)</label><input type="number" id="p-rate" min="0" max="100" step="0.5" inputmode="decimal" required>
+      <div class="hint">Vale per i nuovi mesi; quelli già registrati tengono la loro percentuale.</div></div>
+    <label class="switch" for="p-active">Attivo<input type="checkbox" id="p-active" checked></label>
+    <div class="sheet-actions">
+      <button class="btn danger" type="button" id="p-del">Elimina persona</button>
+      <span class="grow"></span>
+      <button class="btn" type="button" data-close>Annulla</button>
+      <button class="btn primary" type="submit">Salva</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="sheet" id="dlg-access">
+  <div class="grab"></div>
+  <div class="body" id="access-body"></div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,signOut,setPersistence,inMemoryPersistence} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,doc,collection,setDoc,updateDoc,deleteDoc,getDoc,onSnapshot,writeBatch} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const CFG={apiKey:"AIzaSyD-6uQj2bAhAW2TNylR17TDoCOy6PTbf18",authDomain:"libri-commissioni.firebaseapp.com",projectId:"libri-commissioni",storageBucket:"libri-commissioni.firebasestorage.app",messagingSenderId:"939194135580",appId:"1:939194135580:web:08f0d1dfc5a566fbae1bd9"};
+const ADMIN_EMAIL="andreigrigoras1999@yahoo.it";
+const SITE_URL="https://andreigrig08.github.io/commissioni/";
+const EMAIL_DOMAIN="utenti.libri-commissioni.firebaseapp.com";
+const fbApp=initializeApp(CFG), auth=getAuth(fbApp), fs=getFirestore(fbApp);
+const secApp=initializeApp(CFG,"secondary"), secAuth=getAuth(secApp);
+setPersistence(secAuth,inMemoryPersistence).catch(()=>{});
+/* Small adapter so the app code reads like before: db.collection(c).doc(id).set(...) */
+const R=p=>{const r=doc(fs,p);return {set:d=>setDoc(r,d),update:d=>updateDoc(r,d),delete:()=>deleteDoc(r),get:async()=>{const s=await getDoc(r);return {exists:s.exists(),data:()=>s.data()}}}};
+const FDB={collection:c=>({doc:id=>R(c+"/"+id),onSnapshot:(n,e)=>onSnapshot(collection(fs,c),s=>n({docs:s.docs.map(d=>({id:d.id,data:()=>d.data()}))}),e)}),doc:p=>R(p)};
+const IMPORT_DATA={"people": [{"id": "lorenzo", "name": "Lorenzo", "rate": 0.2, "active": true, "order": 4}, {"id": "matteo", "name": "Matteo", "rate": 0.1, "active": true, "order": 1}, {"id": "simone-p", "name": "Simone P.", "rate": 0.1, "active": true, "order": 3}, {"id": "stefano", "name": "Stefano", "rate": 0.1, "active": true, "order": 2}], "entries": [{"id": "2025-05_matteo", "commission": 210, "month": "2025-05", "paid": true, "person": "matteo", "rate": 0.1, "sales": 2106.86}, {"id": "2025-05_simone-p", "commission": 77, "month": "2025-05", "paid": true, "person": "simone-p", "rate": 0.1, "sales": 771.24}, {"id": "2025-05_stefano", "commission": 60, "month": "2025-05", "paid": true, "person": "stefano", "rate": 0.1, "sales": 2615.87}, {"id": "2025-06_lorenzo", "commission": 190, "month": "2025-06", "paid": false, "person": "lorenzo", "rate": 0.2, "sales": 953.76}, {"id": "2025-06_matteo", "commission": 99, "month": "2025-06", "paid": true, "person": "matteo", "rate": 0.1, "sales": 991.11}, {"id": "2025-06_simone-p", "commission": 39, "month": "2025-06", "paid": true, "person": "simone-p", "rate": 0.1, "sales": 390}, {"id": "2025-06_stefano", "commission": 60, "month": "2025-06", "paid": true, "person": "stefano", "rate": 0.1, "sales": 2123.23}, {"id": "2025-07_lorenzo", "commission": 90, "month": "2025-07", "paid": false, "person": "lorenzo", "rate": 0.2, "sales": 458}, {"id": "2025-07_matteo", "commission": 120, "month": "2025-07", "paid": true, "person": "matteo", "rate": 0.1, "sales": 1256}, {"id": "2025-07_simone-p", "commission": 30, "month": "2025-07", "paid": true, "person": "simone-p", "rate": 0.1, "sales": 309}, {"id": "2025-07_stefano", "commission": 190, "month": "2025-07", "paid": true, "person": "stefano", "rate": 0.1, "sales": 1988}, {"id": "2025-08_lorenzo", "commission": null, "month": "2025-08", "paid": false, "person": "lorenzo", "rate": 0.2, "sales": 870.61}, {"id": "2025-08_matteo", "commission": 25, "month": "2025-08", "paid": true, "person": "matteo", "rate": 0.1, "sales": 251.55}, {"id": "2025-08_simone-p", "commission": 10, "month": "2025-08", "paid": true, "person": "simone-p", "rate": 0.1, "sales": 108}, {"id": "2025-08_stefano", "commission": 140, "month": "2025-08", "paid": true, "person": "stefano", "rate": 0.1, "sales": 1469.56}, {"id": "2025-09_matteo", "commission": 15, "month": "2025-09", "paid": true, "person": "matteo", "rate": 0.1, "sales": 156}, {"id": "2025-09_simone-p", "commission": 17, "month": "2025-09", "paid": true, "person": "simone-p", "rate": 0.1, "sales": 179}, {"id": "2025-09_stefano", "commission": 14, "month": "2025-09", "paid": true, "person": "stefano", "rate": 0.1, "sales": 140}, {"id": "2025-10_matteo", "commission": 89, "month": "2025-10", "paid": true, "person": "matteo", "rate": 0.1, "sales": 891.13}, {"id": "2025-10_simone-p", "commission": 37, "month": "2025-10", "paid": true, "person": "simone-p", "rate": 0.1, "sales": 375}, {"id": "2025-10_stefano", "commission": 100, "month": "2025-10", "paid": false, "person": "stefano", "rate": 0.1, "sales": 1011}, {"id": "2025-11_matteo", "commission": null, "month": "2025-11", "paid": true, "person": "matteo", "rate": 0.1, "sales": 1414}, {"id": "2025-11_simone-p", "commission": 65, "month": "2025-11", "paid": true, "person": "simone-p", "rate": 0.1, "sales": 658}, {"id": "2025-11_stefano", "commission": 300, "month": "2025-11", "paid": false, "person": "stefano", "rate": 0.1, "sales": 3065}]};
+(function(){
+const $=s=>document.querySelector(s);
+const eur=new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',minimumFractionDigits:0,maximumFractionDigits:2});
+const fmt=n=>n==null?'—':eur.format(n);
+const r2=n=>Math.round(n*100)/100;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MONTHS=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const monthLabel=m=>{const [y,mm]=m.split('-');return MONTHS[+mm-1]+' '+y};
+const nextMonth=m=>{let [y,mm]=m.split('-').map(Number);mm++;if(mm>12){mm=1;y++}return y+'-'+String(mm).padStart(2,'0')};
+const prevMonth=m=>{let [y,mm]=m.split('-').map(Number);mm--;if(mm<1){mm=12;y--}return y+'-'+String(mm).padStart(2,'0')};
+const nowMonth=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const dateLabel=d=>d?new Date(d+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'}):'Data non registrata';
+const pct=r=>(Math.round((r||0)*1000)/10).toString().replace('.',',')+'%';
+const euroIn=n=>n==null?'':String(n).replace('.',',');
+function parseEuro(s){
+  s=String(s||'').replace(/[€\s]/g,'');
+  if(!s) return null;
+  if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
+  else if(/^\d{1,3}(\.\d{3})+$/.test(s)) s=s.replace(/\./g,'');
+  const n=Number(s); return Number.isFinite(n)?n:NaN;
+}
+const I={
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2Zm0 0A2 2 0 0 0 6 22h13"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg>',
+  go:'<svg class="go" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>',
+  eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/></svg>',
+  euro:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M17.5 6.5A7 7 0 1 0 17.5 17.5M4 10.5h9M4 13.5h9"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>',
+  user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4.2 4-6.5 8-6.5s7.2 2.3 8 6.5"/></svg>',
+};
+
+let db=null;
+const S={mode:'loading',people:{},entries:{},open:null,preview:false,gotP:false,gotE:false,client:null};
+
+/* ---- money logic ---- */
+const commOf=e=>e.commission!=null?e.commission:(e.sales!=null?Math.floor(e.sales*(e.rate||0)):0);
+/* Rows imported as "paid" without dated payments count as fully paid. */
+const paysOf=e=>Array.isArray(e.payments)&&e.payments.length?e.payments:(e.paid&&!Array.isArray(e.payments)?[{amount:commOf(e),date:null,legacy:true}]:[]);
+const paidOf=e=>r2(paysOf(e).reduce((a,p)=>a+(+p.amount||0),0));
+const restOf=e=>Math.max(0,r2(commOf(e)-paidOf(e)));
+function stateOf(e){const c=commOf(e),p=paidOf(e);if(c<=0||p>=c-0.005)return 'paid';return p>0?'part':'due'}
+const tag=st=>st==='paid'?`<span class="tag paid">${I.check}Pagato</span>`:st==='part'?`<span class="tag part">Parziale</span>`:`<span class="tag due">Da pagare</span>`;
+
+const peopleSorted=()=>Object.entries(S.people).map(([id,p])=>({id,...p})).sort((a,b)=>(a.active===false)-(b.active===false)||(a.order??99)-(b.order??99)||a.name.localeCompare(b.name));
+const entriesOf=pid=>Object.entries(S.entries).map(([id,e])=>({id,...e})).filter(e=>e.person===pid&&(e.sales!=null||e.commission!=null)).sort((a,b)=>b.month.localeCompare(a.month));
+const allMonths=()=>[...new Set(Object.values(S.entries).map(e=>e.month))].sort();
+const initials=n=>String(n||'?').replace(/[^\p{L}\s]/gu,'').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?';
+const avColor=(pid,order)=>{const n=order!=null?order:[...String(pid)].reduce((a,c)=>a+c.charCodeAt(0),0);return `var(--av${((n-1)%5+5)%5+1})`};
+const avatar=(pid,name,order,cls='')=>`<span class="av ${cls}" style="background:${avColor(pid,order)}">${esc(initials(name))}</span>`;
+
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2000)}
+function setSync(st,txt){const s=$('#sync');s.className='sync '+(st||'');s.querySelector('span').textContent=txt}
+function armOnce(btn,label){if(btn.classList.contains('armed'))return true;btn.classList.add('armed');btn.dataset.orig=btn.textContent;btn.textContent=label;return false}
+function disarm(btn){if(btn.dataset.orig)btn.textContent=btn.dataset.orig;btn.classList.remove('armed')}
+
+const normUser=u=>String(u||'').trim().toLowerCase();
+function genPassword(){const a='abcdefghjkmnpqrstuvwxyz23456789';const r=crypto.getRandomValues(new Uint8Array(8));return [...r].map(x=>a[x%a.length]).join('')}
+
+/* ---------- views ---------- */
+function viewList(){
+  const ppl=peopleSorted();
+  let h='';
+  if(ppl.length) h+=`<div class="home-actions"><button class="btn gold" type="button" data-bulk="1">${I.cal}Nuovo mese</button><button class="btn" type="button" data-addperson="1">${I.plus}Nuova persona</button></div>`;
+  h+=`<div class="section-head"><h2>Le schede</h2></div>`;
+  if(!ppl.length) return h+`<section class="card"><div class="empty-state"><strong>${S.gotP?'Nessuna persona':'Caricamento…'}</strong>${S.gotP?'Aggiungi la prima persona per creare la sua scheda.':''}</div>${S.gotP?'<div style="padding:0 16px 16px"><button class="btn primary block" type="button" data-addperson="1">Nuova persona</button></div>':''}</section>`;
+  h+=`<div class="people">${ppl.map(p=>{
+    const es=entriesOf(p.id), nDue=es.filter(e=>stateOf(e)==='due').length, nPart=es.filter(e=>stateOf(e)==='part').length;
+    const status=!es.length?'<span class="tag">Nessun mese</span>':nDue||nPart?`<span class="tag ${nPart&&!nDue?'part':'due'}">${[nDue?`${nDue} da pagare`:'',nPart?`${nPart} ${nPart===1?'parziale':'parziali'}`:''].filter(Boolean).join(' · ')}</span>`:`<span class="tag paid">${I.check}In regola</span>`;
+    return `<button class="person ${p.active===false?'off':''}" type="button" data-open="${p.id}">
+      ${avatar(p.id,p.name,p.order,'lg')}
+      <span class="t"><span class="name">${esc(p.name)} <span class="rate">${pct(p.rate)}</span></span>
+        <span class="sub">${es.length?`Ultimo mese: ${monthLabel(es[0].month)}`:'Scheda vuota'}${p.login?' · ha l’accesso':''}${p.active===false?' · non attivo':''}</span>
+        ${status}</span>${I.go}</button>`}).join('')}</div>`;
+  h+=`<details class="help"><summary>Come far vedere la scheda a una persona ${I.go}</summary><ol>
+    <li>Apri la sua scheda e tocca <b>Accesso</b>: scegli username e una password iniziale.</li>
+    <li>Tocca <b>Copia</b> e mandale il messaggio: contiene il link ${esc(SITE_URL.replace(/^https:\/\//,''))}, username e password.</li>
+    <li>Lei entra, vede solo la sua scheda (sempre aggiornata) e può cambiarsi la password da sola.</li></ol></details>`;
+  if(S.gotP&&S.gotE&&!Object.keys(S.people).length&&!Object.keys(S.entries).length) h=`<section class="card" style="padding:16px;display:grid;gap:10px"><strong>Database vuoto</strong><div class="muted">Importa le ${IMPORT_DATA.people.length} schede e i ${IMPORT_DATA.entries.length} mesi dell'app precedente.</div><button class="btn primary block" type="button" data-import="1">Importa i dati</button></section>`+h;
+  return h;
+}
+
+function viewSheet(m,{editable,preview}){
+  let h='';
+  if(preview) h+=`<div class="preview-bar"><span>Così vede la pagina ${esc(m.name)}</span><button type="button" data-exitpreview="1">Esci</button></div>`;
+  h+=`<section class="head"><div class="head-top">${avatar(m.pid,m.name,m.order,'xl')}<div class="t"><div class="name">${esc(m.name)}</div><div class="sub">Commissione ${pct(m.rate)} sulle vendite</div></div></div>`;
+  if(editable) h+=`<div class="head-actions">
+      <button class="hbtn" type="button" data-editperson="${m.pid}">${I.edit}Modifica</button>
+      <button class="hbtn ${m.login?'on':''}" type="button" data-access="${m.pid}">${I.lock}${m.login?'Accesso attivo':'Accesso'}</button>
+      <button class="hbtn" type="button" data-preview="1">${I.eye}Vista cliente</button></div>`;
+  h+=`</section>`;
+  if(editable) h+=`<button class="btn gold block" type="button" data-newmonth="${m.pid}">${I.plus}Aggiungi mese</button>`;
+  if(!m.entries.length) return h+`<section class="card"><div class="empty-state"><strong>Nessun mese registrato</strong>${editable?'Tocca “Aggiungi mese” per inserire le vendite.':'Qui vedrai le tue vendite e commissioni mese per mese.'}</div></section>`;
+  for(const e of m.entries){
+    const c=commOf(e), paid=paidOf(e), rest=restOf(e), st=stateOf(e), pays=paysOf(e);
+    const w=c>0?Math.min(100,paid/c*100):100;
+    h+=`<section class="card month">
+      <div class="m-top"><span class="m-name">${monthLabel(e.month)}</span>${tag(st)}</div>
+      <div class="figs num">
+        <div class="fig"><div class="k">Vendite</div><div class="v">${fmt(e.sales)}</div></div>
+        <div class="fig"><div class="k">Commissione</div><div class="v">${fmt(c)}${editable&&e.commission==null?'<span class="auto">auto</span>':''}</div></div>
+        <div class="fig res ${rest?'':'zero'}"><div class="k">Residuo</div><div class="v">${fmt(rest)}</div></div>
+      </div>
+      ${c>0?`<div class="bar" aria-hidden="true"><i style="width:${w}%"></i></div>`:''}
+      ${pays.length?`<div class="pays">${pays.map((p,i)=>{
+        const inner=`<span class="d">${p.legacy?'Pagato':dateLabel(p.date)}${p.legacy?'<small>Data non registrata</small>':''}</span><span class="a">${fmt(+p.amount)}</span>`;
+        return editable?`<button class="pay edit num" type="button" data-editpay="${e.id}|${i}" aria-label="Modifica pagamento">${inner}<span class="pen">${I.edit}</span></button>`:`<div class="pay num">${inner}</div>`}).join('')}</div>`
+        :`<div class="no-pay">Nessun pagamento ancora.</div>`}
+      ${editable?`<div class="m-actions">
+        <button class="btn ${rest?'ok':''}" type="button" data-pay="${e.id}" ${rest?'':'disabled'}>${I.euro}Pagamento</button>
+        <button class="btn" type="button" data-settle="${e.id}" ${rest?'':'disabled'}>${I.check}Salda tutto</button>
+        <button class="btn icon" type="button" data-edit="${e.id}" aria-label="Modifica importi del mese">${I.edit}</button></div>`:''}
+    </section>`;
+  }
+  return h;
+}
+function clientDocFor(pid){
+  const p=S.people[pid]; if(!p) return null;
+  return {person:pid,name:p.name,rate:p.rate,order:p.order??null,updatedAt:new Date().toISOString(),
+    entries:entriesOf(pid).map(e=>({month:e.month,sales:e.sales??null,commission:commOf(e),payments:paysOf(e).map(x=>({amount:+x.amount,date:x.date||null,...(x.legacy?{legacy:true}:{})}))}))};
+}
+const docToModel=d=>({pid:d.person,name:d.name,rate:d.rate,order:d.order,entries:(d.entries||[]).slice().sort((a,b)=>b.month.localeCompare(a.month)).map(e=>({...e,id:e.month}))});
+
+function viewLogin(){
+  return `<section class="head"><div class="head-top"><span class="av xl" style="background:rgba(255,255,255,.16)">${I.lock}</span><div class="t"><div class="name">Area admin</div><div class="sub">Entra per gestire schede, mesi e pagamenti.</div></div></div></section>
+  <section class="card"><form class="login" id="f-login">
+    <div class="field"><label for="l-user">Email</label><input type="text" id="l-user" inputmode="email" autocomplete="username" autocapitalize="off" spellcheck="false" value="${esc(ADMIN_EMAIL)}" required></div>
+    <div class="field"><label for="l-pass">Password</label><input type="password" id="l-pass" autocomplete="current-password" required></div>
+    <div class="err" id="l-err" hidden></div>
+    <button class="btn primary block" type="submit" id="l-go">Entra</button>
+    <div class="btn-row2" style="grid-template-columns:1fr 1fr"><button class="btn" type="button" id="l-new">Primo accesso</button><button class="btn" type="button" id="l-forgot">Password dimenticata</button></div>
+    <div class="muted">Primo accesso: scegli la tua password e tocca “Primo accesso”. Serve una volta sola.</div>
+  </form></section>`;
+}
+
+function render(){
+  const v=$('#view'), b=$('#brand');
+  const inSheet=S.mode==='admin'&&S.open&&S.people[S.open];
+  if(inSheet) b.innerHTML=`<button class="back" type="button" data-back="1" aria-label="Torna alle schede">${I.back}</button><span>Scheda</span>`;
+  else b.innerHTML=`<span class="logo">${I.book}</span><span>Libri Commissioni</span>`;
+  const sync=$('#sync');
+  if(S.mode==='admin') sync.innerHTML=`<button class="logout" type="button" data-logout="1">Esci</button>`;
+  else sync.innerHTML='';
+  if(S.mode==='loading'){v.innerHTML=`<section class="card"><div class="empty-state"><strong>Caricamento…</strong></div></section>`;return}
+  if(S.mode==='login'){v.innerHTML=viewLogin();bindLogin();return}
+  if(S.mode==='denied'){v.innerHTML=`<section class="card"><div class="empty-state"><strong>Questo account non è l'admin</strong>Esci ed entra con l'account admin.<div style="margin-top:12px"><button class="btn primary" type="button" data-logout="1">Esci</button></div></div></section>`;return}
+  if(inSheet){
+    v.innerHTML=S.preview?viewSheet(docToModel(clientDocFor(S.open)),{editable:false,preview:true})
+      :viewSheet({pid:S.open,...S.people[S.open],entries:entriesOf(S.open)},{editable:true});
+  }else{S.open=null;v.innerHTML=viewList()}
+}
+function openSheet(pid){S.open=pid;S.preview=false;try{history.replaceState(null,'','#'+pid)}catch(e){}render();window.scrollTo({top:0})}
+function closeSheet(){S.open=null;S.preview=false;try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}render();window.scrollTo({top:0})}
+
+/* ---------- admin login ---------- */
+const authMsg=e=>{const c=e&&e.code||'';return c.includes('invalid-credential')||c.includes('wrong-password')||c.includes('user-not-found')?'Email o password non corretti.':c.includes('email-already-in-use')?'L’account admin esiste già: usa “Entra”.':c.includes('weak-password')?'Password troppo corta (almeno 6 caratteri).':c.includes('too-many-requests')?'Troppi tentativi, riprova tra qualche minuto.':c.includes('network')?'Connessione non riuscita.':'Operazione non riuscita ('+c+').'};
+function bindLogin(){
+  const f=$('#f-login'); if(!f) return;
+  const err=$('#l-err'), go=$('#l-go');
+  const fail=e=>{err.textContent=authMsg(e);err.hidden=false;go.disabled=false;go.textContent='Entra'};
+  f.addEventListener('submit',async ev=>{
+    ev.preventDefault(); err.hidden=true; go.disabled=true; go.textContent='Verifico…';
+    try{await signInWithEmailAndPassword(auth,$('#l-user').value.trim(),$('#l-pass').value)}catch(e){fail(e)}
+  });
+  $('#l-new').onclick=async()=>{
+    err.hidden=true;
+    const em=$('#l-user').value.trim().toLowerCase();
+    if(em!==ADMIN_EMAIL){err.textContent='Il primo accesso si fa con l’email admin.';err.hidden=false;return}
+    if($('#l-pass').value.length<6){err.textContent='Scegli una password di almeno 6 caratteri.';err.hidden=false;return}
+    try{await createUserWithEmailAndPassword(auth,em,$('#l-pass').value)}catch(e){fail(e)}
+  };
+  $('#l-forgot').onclick=async()=>{
+    try{await sendPasswordResetEmail(auth,$('#l-user').value.trim());toast('Ti ho mandato un’email per reimpostarla')}catch(e){fail(e)}
+  };
+}
+
+/* ---------- writes ---------- */
+async function write(fn,okMsg){
+  if(!db){toast('Salvataggio non disponibile qui');return false}
+  try{await fn();if(okMsg)toast(okMsg);return true}
+  catch(e){console.error(e);toast(e&&e.code==='permission-denied'?'Non hai i permessi per questa modifica':e&&e.code==='resource-exhausted'?'Limite gratuito raggiunto per oggi':'Non salvato, riprova');return false}
+}
+/* Clients read the same live database: nothing to sync. */
+function scheduleSync(){}
+async function runSync(){return true}
+async function savePayments(id,payments,msg){
+  const e=S.entries[id]; if(!e) return;
+  const clean=payments.map(p=>({amount:r2(+p.amount),date:p.date||null})).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const next={...e,payments:clean}; next.paid=stateOf(next)==='paid';
+  S.entries[id]=next; render();
+  if(await write(()=>db.collection('entries').doc(id).update({payments:clean,paid:next.paid}),msg)) scheduleSync(e.person);
+}
+const plainPays=e=>paysOf(e).map(p=>({amount:p.amount,date:p.date||null}));
+
+/* ---------- month sheet (one person) ---------- */
+const dE=$('#dlg-entry'); let ctx=null;
+function monthRange(){
+  const all=allMonths();
+  let hi=nextMonth([nowMonth(),...all].sort().pop());
+  const lo=[prevMonth(prevMonth(prevMonth(nowMonth()))),...all].sort()[0];
+  const out=[];for(let m=hi;m>=lo&&out.length<72;m=prevMonth(m))out.push(m);
+  return out;
+}
+function openEntry(id,pid){
+  const e=id?S.entries[id]:null; pid=e?e.person:pid; const p=S.people[pid];
+  const used=new Set(entriesOf(pid).map(x=>x.month));
+  const opts=monthRange();
+  let def=e?e.month:null;
+  if(!def){const last=entriesOf(pid)[0];def=last?nextMonth(last.month):nowMonth();if(used.has(def))def=opts.find(m=>!used.has(m))||def}
+  $('#e-month').innerHTML=opts.map(m=>`<option value="${m}" ${used.has(m)&&(!e||m!==e.month)?'disabled':''}>${monthLabel(m)}${used.has(m)&&(!e||m!==e.month)?' (già inserito)':''}</option>`).join('');
+  $('#e-month').value=def; $('#e-month').disabled=!!e;
+  ctx={id,person:pid,rate:e?(e.rate??p.rate):p.rate};
+  $('#e-title').textContent=e?'Modifica importi':'Aggiungi mese'; $('#e-sub').textContent=e?`${p.name} · ${monthLabel(e.month)}`:p.name;
+  $('#e-sales').value=e?euroIn(e.sales):''; $('#e-comm').value=e?euroIn(e.commission):'';
+  $('#e-del').hidden=!e; disarm($('#e-del'));
+  updateHint(); dE.showModal();
+}
+function updateHint(){
+  const s=parseEuro($('#e-sales').value); const auto=(s!=null&&!isNaN(s))?Math.floor(s*ctx.rate):null;
+  $('#e-comm').placeholder=auto!=null?`Auto: ${fmt(auto)}`:'Auto';
+  $('#e-hint').textContent=`Commissione vuota = ${pct(ctx.rate)} delle vendite, arrotondato per difetto. Scrivi un importo per sceglierlo tu.`;
+}
+$('#e-sales').addEventListener('input',updateHint);
+$('#e-del').onclick=async()=>{
+  if(!armOnce($('#e-del'),'Conferma')) return;
+  const {id,person}=ctx; dE.close(); const old=S.entries[id]; delete S.entries[id]; render();
+  if(await write(()=>db.collection('entries').doc(id).delete(),'Mese eliminato')) scheduleSync(person); else {S.entries[id]=old;render()}
+};
+$('#f-entry').addEventListener('submit',async ev=>{
+  ev.preventDefault();
+  const sales=parseEuro($('#e-sales').value), comm=parseEuro($('#e-comm').value);
+  if(sales==null||isNaN(sales)){toast('Inserisci le vendite');$('#e-sales').focus();return}
+  if(comm!=null&&isNaN(comm)){toast('Commissione non valida');$('#e-comm').focus();return}
+  const prev=ctx.id?S.entries[ctx.id]:null;
+  const month=prev?prev.month:$('#e-month').value;
+  const id=ctx.id||`${month}_${ctx.person}`;
+  const doc={month,person:ctx.person,rate:ctx.rate,sales:r2(sales),commission:comm==null?null:r2(comm),payments:prev?plainPays(prev):[]};
+  doc.paid=stateOf(doc)==='paid';
+  S.entries[id]=doc; dE.close(); render();
+  if(await write(()=>db.collection('entries').doc(id).set(doc),'Salvato')) scheduleSync(ctx.person);
+});
+
+/* ---------- new month for everyone ---------- */
+const dB=$('#dlg-bulk');
+function fillBulk(){
+  const m=$('#b-month').value;
+  $('#b-rows').innerHTML=peopleSorted().filter(p=>p.active!==false).map(p=>{const e=S.entries[`${m}_${p.id}`];return `<div class="bulk-row ${e?'has':''}"><label class="n" for="b-${p.id}">${avatar(p.id,p.name,p.order)}${esc(p.name)}</label><input type="text" inputmode="decimal" id="b-${p.id}" placeholder="Vendite €" value="${e?euroIn(e.sales):''}" autocomplete="off"></div>`}).join('');
+}
+function openBulk(){
+  const ms=allMonths(); const def=ms.length?nextMonth(ms[ms.length-1]):nowMonth();
+  $('#b-month').innerHTML=monthRange().map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('');
+  $('#b-month').value=def; fillBulk(); dB.showModal();
+}
+$('#b-month').addEventListener('change',fillBulk);
+$('#f-bulk').addEventListener('submit',async ev=>{
+  ev.preventDefault();
+  const m=$('#b-month').value, todo=[];
+  for(const p of peopleSorted().filter(p=>p.active!==false)){
+    const raw=$('#b-'+p.id).value, v=parseEuro(raw), id=`${m}_${p.id}`, prev=S.entries[id];
+    if(v==null) continue;
+    if(isNaN(v)){toast(`Importo non valido per ${p.name}`);$('#b-'+p.id).focus();return}
+    if(prev&&prev.sales===r2(v)) continue;
+    const doc=prev?{...prev,sales:r2(v)}:{month:m,person:p.id,rate:p.rate,sales:r2(v),commission:null,payments:[],paid:false};
+    if(prev&&!Array.isArray(prev.payments)) doc.payments=plainPays(prev);
+    doc.paid=stateOf(doc)==='paid'; todo.push([id,doc,p.id]);
+  }
+  dB.close();
+  if(!todo.length){toast('Nessun importo inserito');return}
+  todo.forEach(([id,doc])=>S.entries[id]=doc); render();
+  for(const [id,doc,pid] of todo){if(await write(()=>db.collection('entries').doc(id).set(doc)))scheduleSync(pid)}
+  toast(`${monthLabel(m)} salvato`);
+});
+
+/* ---------- payment sheet (new or edit) ---------- */
+const dY=$('#dlg-pay'); let yctx=null;
+function openPay(id,index){
+  const e=S.entries[id]; if(!e) return;
+  const pays=plainPays(e), editing=index!=null, cur=editing?pays[index]:null;
+  const rest=restOf(e);
+  yctx={id,index:editing?index:null};
+  $('#y-title').textContent=editing?'Modifica pagamento':'Nuovo pagamento';
+  $('#y-sub').textContent=`${S.people[e.person]?.name||''} · ${monthLabel(e.month)} · residuo ${fmt(rest)}`;
+  $('#y-amount').value=euroIn(editing?cur.amount:rest); $('#y-date').value=editing?(cur.date||''):today();
+  const q=editing?[]:[rest,r2(rest/2)].filter((v,i,a)=>v>0&&a.indexOf(v)===i);
+  $('#y-quick').innerHTML=q.map((v,i)=>`<button type="button" data-amt="${v}">${i===0?'Tutto il residuo':'Metà'} · ${fmt(v)}</button>`).join('');
+  $('#y-del').hidden=!editing; disarm($('#y-del'));
+  dY.showModal(); setTimeout(()=>{$('#y-amount').focus();$('#y-amount').select()},50);
+}
+$('#y-quick').addEventListener('click',ev=>{const b=ev.target.closest('[data-amt]');if(b)$('#y-amount').value=euroIn(+b.dataset.amt)});
+$('#y-del').onclick=()=>{
+  if(!armOnce($('#y-del'),'Conferma')) return;
+  const e=S.entries[yctx.id]; const pays=plainPays(e); pays.splice(yctx.index,1); dY.close();
+  savePayments(yctx.id,pays,'Pagamento eliminato');
+};
+$('#f-pay').addEventListener('submit',ev=>{
+  ev.preventDefault();
+  const amt=parseEuro($('#y-amount').value), date=$('#y-date').value;
+  if(amt==null||isNaN(amt)||amt<=0){toast('Inserisci un importo');$('#y-amount').focus();return}
+  if(!date){toast('Scegli la data');return}
+  const e=S.entries[yctx.id]; const pays=plainPays(e); dY.close();
+  if(yctx.index!=null){pays[yctx.index]={amount:amt,date};savePayments(yctx.id,pays,'Pagamento modificato')}
+  else{const full=amt>=restOf(e)-0.005;pays.push({amount:amt,date});savePayments(yctx.id,pays,full?'Mese saldato':'Pagamento parziale registrato')}
+});
+
+/* ---------- person sheet ---------- */
+const dP=$('#dlg-person'); let pctx=null;
+function openPerson(id){
+  const p=id?S.people[id]:null; pctx={id};
+  $('#p-title').textContent=p?'Modifica persona':'Nuova persona';
+  $('#p-name').value=p?p.name:''; $('#p-rate').value=p?Math.round(p.rate*1000)/10:10; $('#p-active').checked=p?p.active!==false:true;
+  $('#p-del').hidden=!p; disarm($('#p-del'));
+  dP.showModal();
+}
+$('#p-del').onclick=async()=>{
+  const id=pctx.id, p=S.people[id]; if(!p) return;
+  const n=entriesOf(id).length;
+  if(!armOnce($('#p-del'),n?`Elimina anche ${n} mesi`:'Conferma')) return;
+  dP.close();
+  const ids=Object.keys(S.entries).filter(k=>S.entries[k].person===id);
+  delete S.people[id]; ids.forEach(k=>delete S.entries[k]); S.open=null; render();
+  if(p.uid) await write(()=>db.collection('members').doc(p.uid).delete());
+  if(p.login) await write(()=>db.collection('logins').doc(p.login).delete());
+  for(const k of ids) await write(()=>db.collection('entries').doc(k).delete());
+  await write(()=>db.collection('people').doc(id).delete(),`${p.name} eliminato`);
+};
+$('#f-person').addEventListener('submit',async ev=>{
+  ev.preventDefault();
+  const name=$('#p-name').value.trim(), rate=Number($('#p-rate').value)/100;
+  if(!name||!(rate>=0)) return;
+  let id=pctx.id;
+  if(!id){id=name.toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'persona';if(S.people[id])id+='-'+Math.random().toString(36).slice(2,6)}
+  const prev=S.people[id]||{};
+  const doc={...prev,name,rate,active:$('#p-active').checked,order:prev.order??(Math.max(0,...Object.values(S.people).map(p=>p.order||0))+1)};
+  S.people[id]=doc; dP.close(); if(!pctx.id){S.open=id;window.scrollTo({top:0})} render();
+  if(await write(()=>db.collection('people').doc(id).set(doc),pctx.id?'Salvato':`${name} aggiunto`)) scheduleSync(id);
+});
+
+/* ---------- access (username + password, Firebase accounts) ---------- */
+const dA=$('#dlg-access'); let actx=null;
+function credText(u,pw){return `Le tue commissioni\n${SITE_URL}\nUsername: ${u}\nPassword: ${pw}\nDopo il primo accesso puoi cambiare la password da “Password”.`}
+function openAccess(pid){
+  const p=S.people[pid]; if(!p) return; actx={pid};
+  const sug=normUser(p.name).normalize('NFD').replace(/[^a-z0-9]+/g,'.').replace(/^\.|\.$/g,'');
+  $('#access-body').innerHTML=p.login?`<h3>Accesso di ${esc(p.name)}</h3>
+      <div class="cred">Username: <b>${esc(p.login)}</b><span class="muted">La password la gestisce ${esc(p.name)}: può cambiarla quando vuole.</span></div>
+      <div class="field"><label for="a-pass">Se l'ha dimenticata, scegli una nuova password</label><div class="pw"><input type="text" id="a-pass" autocomplete="off" autocapitalize="off" spellcheck="false" value="${genPassword()}"><button class="btn" type="button" id="a-gen">Genera</button></div></div>
+      <div class="err" id="a-err" hidden></div>
+      <div class="sheet-actions"><button class="btn danger" type="button" id="a-off">Disattiva</button><span class="grow"></span><button class="btn" type="button" data-close>Chiudi</button><button class="btn primary" type="button" id="a-go">Nuova password</button></div>`
+    :`<h3>Accesso di ${esc(p.name)}</h3><div class="sub">Crea username e password iniziale. Dopo potrà cambiarla da solo.</div>
+      <div class="field"><label for="a-user">Username</label><input type="text" id="a-user" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(sug)}"></div>
+      <div class="field"><label for="a-pass">Password iniziale</label><div class="pw"><input type="text" id="a-pass" autocomplete="off" autocapitalize="off" spellcheck="false" value="${genPassword()}"><button class="btn" type="button" id="a-gen">Genera</button></div></div>
+      <div class="err" id="a-err" hidden></div>
+      <div class="sheet-actions"><span class="grow"></span><button class="btn" type="button" data-close>Annulla</button><button class="btn primary" type="button" id="a-go">Crea accesso</button></div>`;
+  dA.showModal();
+  $('#a-gen').onclick=()=>{$('#a-pass').value=genPassword()};
+  $('#a-go').onclick=()=>createAccess(pid,p.login||normUser($('#a-user').value),$('#a-pass').value.trim(),!!p.login);
+  const off=$('#a-off'); if(off) off.onclick=async()=>{if(!armOnce(off,'Conferma'))return;dA.close();await disableAccess(pid)};
+}
+async function createAccess(pid,username,pw,isReset){
+  const err=$('#a-err'), go=$('#a-go'); const showErr=t=>{err.textContent=t;err.hidden=false;go.disabled=false};
+  err.hidden=true;
+  if(!/^[a-z0-9._-]{3,40}$/.test(username)) return showErr('Username: almeno 3 caratteri, solo lettere, numeri, punto o trattino.');
+  if(pw.length<6) return showErr('La password deve avere almeno 6 caratteri.');
+  go.disabled=true; go.textContent='Creo…';
+  try{
+    if(!isReset){const ex=await getDoc(doc(fs,'logins/'+username));if(ex.exists())return showErr('Username già usato: scegline un altro.')}
+    let email=`${username}@${EMAIL_DOMAIN}`, cred;
+    if(isReset) email=`${username}.${Date.now().toString(36)}@${EMAIL_DOMAIN}`;
+    try{cred=await createUserWithEmailAndPassword(secAuth,email,pw)}
+    catch(e){if(String(e.code).includes('email-already-in-use')){email=`${username}.${Date.now().toString(36)}@${EMAIL_DOMAIN}`;cred=await createUserWithEmailAndPassword(secAuth,email,pw)}else throw e}
+    const uid=cred.user.uid; await signOut(secAuth).catch(()=>{});
+    const p=S.people[pid], oldUid=p.uid;
+    const b=writeBatch(fs);
+    b.set(doc(fs,'members/'+uid),{pid,username});
+    b.set(doc(fs,'logins/'+username),{email,uid});
+    b.update(doc(fs,'people/'+pid),{login:username,uid});
+    if(oldUid&&oldUid!==uid) b.delete(doc(fs,'members/'+oldUid));
+    await b.commit();
+    S.people[pid]={...p,login:username,uid}; render();
+    $('#access-body').innerHTML=`<h3>${isReset?'Nuova password pronta':'Accesso creato'}</h3>
+      <div class="cred">Link: <b>${esc(SITE_URL)}</b>Username: <b>${esc(username)}</b>Password: <b>${esc(pw)}</b></div>
+      <div class="muted">Mandale questi dati: è l'unica volta che vedi la password.${isReset?' La vecchia password non funziona più.':''}</div>
+      <div class="sheet-actions"><span class="grow"></span><button class="btn" type="button" data-close>Chiudi</button><button class="btn primary" type="button" id="a-copy">Copia messaggio</button></div>`;
+    $('#a-copy').onclick=async()=>{try{await navigator.clipboard.writeText(credText(username,pw));toast('Messaggio copiato')}catch(e){toast('Copia non riuscita: copia a mano')}};
+  }catch(e){console.error(e);go.textContent=isReset?'Nuova password':'Crea accesso';showErr(authMsg(e))}
+}
+async function disableAccess(pid){
+  const p=S.people[pid]; if(!p||!p.login) return;
+  const b=writeBatch(fs);
+  if(p.uid) b.delete(doc(fs,'members/'+p.uid));
+  b.delete(doc(fs,'logins/'+p.login));
+  const next={...p}; delete next.login; delete next.uid;
+  b.set(doc(fs,'people/'+pid),next);
+  S.people[pid]=next; render();
+  try{await b.commit();toast('Accesso disattivato')}catch(e){toast('Non riuscito, riprova')}
+}
+async function importData(){
+  const btn=document.querySelector('[data-import]'); if(btn){btn.disabled=true;btn.textContent='Importo…'}
+  try{
+    const b=writeBatch(fs);
+    for(const p of IMPORT_DATA.people){const {id,...d}=p;b.set(doc(fs,'people/'+id),d)}
+    for(const e of IMPORT_DATA.entries){const {id,...d}=e;b.set(doc(fs,'entries/'+id),d)}
+    await b.commit(); toast('Dati importati');
+  }catch(e){console.error(e);toast('Import non riuscito');if(btn){btn.disabled=false;btn.textContent='Importa i dati'}}
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',ev=>{
+  const c=ev.target.closest('[data-close]'); if(c){c.closest('dialog').close();return}
+  const b=ev.target.closest('[data-back],[data-open],[data-addperson],[data-editperson],[data-access],[data-preview],[data-exitpreview],[data-newmonth],[data-bulk],[data-edit],[data-pay],[data-settle],[data-editpay],[data-logout],[data-import]');
+  if(!b) return; const d=b.dataset;
+  if(d.back) closeSheet();
+  else if(d.open) openSheet(d.open);
+  else if(d.addperson) openPerson(null);
+  else if(d.editperson) openPerson(d.editperson);
+  else if(d.access) openAccess(d.access);
+  else if(d.preview){S.preview=true;render();window.scrollTo({top:0})}
+  else if(d.exitpreview){S.preview=false;render()}
+  else if(d.newmonth) openEntry(null,d.newmonth);
+  else if(d.bulk) openBulk();
+  else if(d.edit) openEntry(d.edit);
+  else if(d.pay) openPay(d.pay);
+  else if(d.editpay){const [id,i]=d.editpay.split('|');openPay(id,+i)}
+  else if(d.settle){const e=S.entries[d.settle];const rest=restOf(e);if(rest>0){const pays=plainPays(e);pays.push({amount:rest,date:today()});savePayments(d.settle,pays,'Mese saldato')}}
+  else if(d.logout){signOut(auth)}
+  else if(d.import) importData();
+});
+for(const d of document.querySelectorAll('dialog.sheet')) d.addEventListener('click',ev=>{if(ev.target===d)d.close()});
+
+/* ---------- boot ---------- */
+db=FDB;
+render();
+let unsubs=[];
+onAuthStateChanged(auth,u=>{
+  unsubs.forEach(f=>f());unsubs=[];S.people={};S.entries={};S.gotP=S.gotE=false;
+  if(!u){S.mode='login';render();return}
+  if((u.email||'').toLowerCase()!==ADMIN_EMAIL){S.mode='denied';render();return}
+  S.mode='admin';
+  const h=(location.hash||'').slice(1); if(h) S.open=h;
+  render();
+  const fail=e=>{console.error(e);toast('Connessione al database persa: ricarica')};
+  unsubs.push(db.collection('people').onSnapshot(s=>{const o={};s.docs.forEach(d=>o[d.id]=d.data());S.people=o;S.gotP=true;render()},fail));
+  unsubs.push(db.collection('entries').onSnapshot(s=>{const o={};s.docs.forEach(d=>o[d.id]=d.data());S.entries=o;S.gotE=true;render()},fail));
+});
+})();
+</script>
+
+</body>
+</html>
