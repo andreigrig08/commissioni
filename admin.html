@@ -405,7 +405,7 @@ function viewList(){
   const ppl=peopleSorted();
   let h='';
   if(ppl.length) h+=`<div class="home-actions"><button class="btn gold" type="button" data-bulk="1">${I.cal}Nuovo mese</button><button class="btn" type="button" data-addperson="1">${I.plus}Nuova persona</button></div>`;
-  h+=`<div class="section-head"><h2>Le schede</h2></div>`;
+  h+=`<div class="section-head"><h2>Le schede</h2><button class="link" type="button" data-bulkaccess="1">Crea accessi per tutti</button></div>`;
   if(!ppl.length) return h+`<section class="card"><div class="empty-state"><strong>${S.gotP?'Nessuna persona':'Caricamento…'}</strong>${S.gotP?'Aggiungi la prima persona per creare la sua scheda.':''}</div>${S.gotP?'<div style="padding:0 16px 16px"><button class="btn primary block" type="button" data-addperson="1">Nuova persona</button></div>':''}</section>`;
   h+=`<div class="people">${ppl.map(p=>{
     const es=entriesOf(p.id), nDue=es.filter(e=>stateOf(e)==='due').length, nPart=es.filter(e=>stateOf(e)==='part').length;
@@ -702,6 +702,52 @@ function openAccess(pid){
   $('#a-go').onclick=()=>createAccess(pid,p.login||normUser($('#a-user').value),$('#a-pass').value.trim(),!!p.login);
   const off=$('#a-off'); if(off) off.onclick=async()=>{if(!armOnce(off,'Conferma'))return;dA.close();await disableAccess(pid)};
 }
+const sugUser=n=>normUser(n).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'.').replace(/^\.|\.$/g,'');
+/* Creates (or replaces) the login of one person. Throws on failure. */
+async function makeAccount(pid,username,pw,isReset){
+  let email=isReset?`${username}.${Date.now().toString(36)}@${EMAIL_DOMAIN}`:`${username}@${EMAIL_DOMAIN}`, cred;
+  try{cred=await createUserWithEmailAndPassword(secAuth,email,pw)}
+  catch(e){if(String(e.code).includes('email-already-in-use')){email=`${username}.${Date.now().toString(36)}@${EMAIL_DOMAIN}`;cred=await createUserWithEmailAndPassword(secAuth,email,pw)}else throw e}
+  const uid=cred.user.uid; await signOut(secAuth).catch(()=>{});
+  const p=S.people[pid], oldUid=p.uid;
+  const b=writeBatch(fs);
+  b.set(doc(fs,'members/'+uid),{pid,username});
+  b.set(doc(fs,'logins/'+username),{email,uid});
+  b.update(doc(fs,'people/'+pid),{login:username,uid});
+  if(oldUid&&oldUid!==uid) b.delete(doc(fs,'members/'+oldUid));
+  await b.commit();
+  S.people[pid]={...p,login:username,uid};
+}
+function openBulkAccess(){
+  const ppl=peopleSorted().filter(p=>p.active!==false);
+  const rows=ppl.map(p=>({pid:p.id,name:p.name,user:p.login||sugUser(p.name),pw:simplePw(p.name),reset:!!p.login}));
+  $('#access-body').innerHTML=`<h3>Accessi per tutti</h3>
+    <div class="sub">Creo l'accesso a chi non ce l'ha e metto la password nome+123 a tutti. Le password vecchie smettono di funzionare.</div>
+    <div class="cred">${rows.map(r=>`<span>${esc(r.name)}: <b>${esc(r.user)}</b> / <b>${esc(r.pw)}</b>${r.reset?' <span class="muted">(nuova password)</span>':''}</span>`).join('')}</div>
+    <div class="err" id="a-err" hidden></div>
+    <div class="sheet-actions"><span class="grow"></span><button class="btn" type="button" data-close>Annulla</button><button class="btn primary" type="button" id="a-go">Crea accessi</button></div>`;
+  dA.showModal();
+  $('#a-go').onclick=async()=>{
+    const go=$('#a-go'); go.disabled=true; const done=[], failed=[];
+    for(const r of rows){
+      go.textContent=`Creo ${done.length+failed.length+1}/${rows.length}…`;
+      try{
+        if(!r.reset){const ex=await getDoc(doc(fs,'logins/'+r.user));if(ex.exists()&&ex.data().uid!==S.people[r.pid].uid) throw {code:'username-taken'}}
+        await makeAccount(r.pid,r.user,r.pw,r.reset); done.push(r);
+      }catch(e){console.error(e);failed.push({...r,err:e.code==='username-taken'?'username già usato':authMsg(e)})}
+    }
+    render();
+    const all=done.map(r=>credText(r.user,r.pw)).join('\n\n— — —\n\n');
+    $('#access-body').innerHTML=`<h3>Accessi pronti</h3>
+      <div class="muted">Tocca “Copia” accanto a ogni nome e incolla il messaggio su WhatsApp.</div>
+      <div class="cred">${done.map((r,i)=>`<span style="display:flex;align-items:center;gap:8px;justify-content:space-between">${esc(r.name)}: <b>${esc(r.user)}</b> / <b>${esc(r.pw)}</b><button class="btn" type="button" data-cp="${i}" style="height:34px">Copia</button></span>`).join('')}</div>
+      ${failed.length?`<div class="err">Non riuscito per: ${failed.map(f=>esc(f.name)+' ('+esc(f.err)+')').join(', ')}</div>`:''}
+      <div class="sheet-actions"><span class="grow"></span><button class="btn" type="button" data-close>Chiudi</button><button class="btn primary" type="button" id="a-cpall">Copia tutti</button></div>`;
+    const cp=async t=>{try{await navigator.clipboard.writeText(t);toast('Copiato')}catch(e){toast('Copia non riuscita')}};
+    $('#access-body').querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>cp(credText(done[+b.dataset.cp].user,done[+b.dataset.cp].pw)));
+    $('#a-cpall').onclick=()=>cp(all);
+  };
+}
 async function createAccess(pid,username,pw,isReset){
   const err=$('#a-err'), go=$('#a-go'); const showErr=t=>{err.textContent=t;err.hidden=false;go.disabled=false};
   err.hidden=true;
@@ -710,19 +756,7 @@ async function createAccess(pid,username,pw,isReset){
   go.disabled=true; go.textContent='Creo…';
   try{
     if(!isReset){const ex=await getDoc(doc(fs,'logins/'+username));if(ex.exists())return showErr('Username già usato: scegline un altro.')}
-    let email=`${username}@${EMAIL_DOMAIN}`, cred;
-    if(isReset) email=`${username}.${Date.now().toString(36)}@${EMAIL_DOMAIN}`;
-    try{cred=await createUserWithEmailAndPassword(secAuth,email,pw)}
-    catch(e){if(String(e.code).includes('email-already-in-use')){email=`${username}.${Date.now().toString(36)}@${EMAIL_DOMAIN}`;cred=await createUserWithEmailAndPassword(secAuth,email,pw)}else throw e}
-    const uid=cred.user.uid; await signOut(secAuth).catch(()=>{});
-    const p=S.people[pid], oldUid=p.uid;
-    const b=writeBatch(fs);
-    b.set(doc(fs,'members/'+uid),{pid,username});
-    b.set(doc(fs,'logins/'+username),{email,uid});
-    b.update(doc(fs,'people/'+pid),{login:username,uid});
-    if(oldUid&&oldUid!==uid) b.delete(doc(fs,'members/'+oldUid));
-    await b.commit();
-    S.people[pid]={...p,login:username,uid}; render();
+    await makeAccount(pid,username,pw,isReset); render();
     $('#access-body').innerHTML=`<h3>${isReset?'Nuova password pronta':'Accesso creato'}</h3>
       <div class="cred">Link: <b>${esc(SITE_URL)}</b>Username: <b>${esc(username)}</b>Password: <b>${esc(pw)}</b></div>
       <div class="muted">Mandale questi dati: è l'unica volta che vedi la password.${isReset?' La vecchia password non funziona più.':''}</div>
@@ -764,7 +798,7 @@ $('#n-del').onclick=()=>{if(!armOnce($('#n-del'),'Conferma'))return;dN.close();s
 /* ---------- events ---------- */
 document.addEventListener('click',ev=>{
   const c=ev.target.closest('[data-close]'); if(c){c.closest('dialog').close();return}
-  const b=ev.target.closest('[data-back],[data-open],[data-addperson],[data-editperson],[data-access],[data-preview],[data-exitpreview],[data-newmonth],[data-bulk],[data-edit],[data-pay],[data-settle],[data-editpay],[data-logout],[data-import],[data-note]');
+  const b=ev.target.closest('[data-back],[data-open],[data-addperson],[data-editperson],[data-access],[data-preview],[data-exitpreview],[data-newmonth],[data-bulk],[data-edit],[data-pay],[data-settle],[data-editpay],[data-logout],[data-import],[data-note],[data-bulkaccess]');
   if(!b) return; const d=b.dataset;
   if(d.back) closeSheet();
   else if(d.open) openSheet(d.open);
@@ -782,6 +816,7 @@ document.addEventListener('click',ev=>{
   else if(d.logout){signOut(auth)}
   else if(d.import) importData();
   else if(d.note) openNote(d.note);
+  else if(d.bulkaccess) openBulkAccess();
 });
 for(const d of document.querySelectorAll('dialog.sheet')) d.addEventListener('click',ev=>{if(ev.target===d)d.close()});
 
