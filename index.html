@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>La mia scheda · Commissioni</title>
+<meta name="theme-color" content="#0b3f3d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: mobile-first column (max 600px). Home = list of people; tapping one opens their own sheet (scheda) with months and dated payments. */
+:root{
+  --bg:#edf3f1; --surface:#ffffff; --surface-2:#e2ebe8; --line:#d0dcd8;
+  --fg:#0c1e1c; --muted:#566b67;
+  --brand:#0d6560; --brand-fg:#ffffff; --brand-soft:#d5ece8;
+  --hero-1:#0a3a37; --hero-2:#11726a; --hero-fg:#ffffff; --hero-muted:rgba(255,255,255,.75);
+  --gold:#f5a524; --gold-soft:#fdeed2; --gold-ink:#8f5400;
+  --part:#2f6fdc; --part-soft:#dde8fc;
+  --ok:#0f8a57; --ok-soft:#d6f2e4; --danger:#c43d32;
+  --av1:#f08a5d; --av2:#5b8def; --av3:#c46bd6; --av4:#e2b33a; --av5:#3bb3a0;
+  --shadow:0 1px 2px rgba(12,30,28,.06),0 6px 20px rgba(12,30,28,.06);
+  --f-display:"Unbounded",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#071110; --surface:#0f1c1b; --surface-2:#172826; --line:#223633;
+  --fg:#e4f0ed; --muted:#8ba39e;
+  --brand:#3cc3b6; --brand-fg:#03201d; --brand-soft:#123532;
+  --hero-1:#0c3936; --hero-2:#15776e;
+  --gold:#ffbd48; --gold-soft:#36290f; --gold-ink:#ffcf7d;
+  --part:#7fa8ff; --part-soft:#16264a;
+  --ok:#4bd69c; --ok-soft:#0f3325; --danger:#ff7b70;
+  --av1:#f59a72; --av2:#7aa3f5; --av3:#d488e2; --av4:#ecc35a; --av5:#55c8b5;
+  --shadow:0 1px 2px rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#071110; --surface:#0f1c1b; --surface-2:#172826; --line:#223633;
+  --fg:#e4f0ed; --muted:#8ba39e;
+  --brand:#3cc3b6; --brand-fg:#03201d; --brand-soft:#123532;
+  --hero-1:#0c3936; --hero-2:#15776e;
+  --gold:#ffbd48; --gold-soft:#36290f; --gold-ink:#ffcf7d;
+  --part:#7fa8ff; --part-soft:#16264a;
+  --ok:#4bd69c; --ok-soft:#0f3325; --danger:#ff7b70;
+  --av1:#f59a72; --av2:#7aa3f5; --av3:#d488e2; --av4:#ecc35a; --av5:#55c8b5;
+  --shadow:0 1px 2px rgba(0,0,0,.35); color-scheme:dark}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.45;padding-bottom:40px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.num{font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:disabled{cursor:default;opacity:.5}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:8px}
+svg{flex:none}
+.gutter{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.col{max-width:600px;margin:0 auto}
+
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.topbar .col{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px;min-height:62px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:700;font-size:1rem;letter-spacing:-.01em;min-width:0}
+.logo{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--hero-2),var(--hero-1));display:grid;place-items:center;color:var(--gold)}
+.logo svg{width:19px;height:19px}
+.back{width:40px;height:40px;border-radius:12px;background:var(--surface);box-shadow:var(--shadow);display:grid;place-items:center}
+.back svg{width:22px;height:22px}
+.sync{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted);font-weight:600;white-space:nowrap}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.sync.on i{background:var(--ok)} .sync.err i{background:var(--danger)}
+
+main.col{display:grid;gap:14px;padding-block:4px 16px}
+h2{font-family:var(--f-display);font-weight:700;font-size:1.05rem;margin:0;letter-spacing:-.01em}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:6px}
+.link{color:var(--brand);font-weight:700;font-size:.92rem;padding:8px 2px}
+.card{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+
+.av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.9rem;color:#fff;flex:none}
+.av.lg{width:52px;height:52px;font-size:1.1rem}
+.av.xl{width:64px;height:64px;font-size:1.35rem;box-shadow:0 0 0 3px rgba(255,255,255,.25)}
+.rate{font-size:.72rem;font-weight:800;background:var(--brand-soft);color:var(--brand);border-radius:6px;padding:1px 6px}
+
+/* people list */
+.people{display:grid;gap:10px}
+.person{display:flex;align-items:center;gap:14px;padding:14px 14px 14px 16px;text-align:left;width:100%;background:var(--surface);border-radius:20px;box-shadow:var(--shadow);min-height:80px}
+.person:active{transform:scale(.99)}
+.person .t{flex:1;min-width:0;display:grid;gap:4px}
+.person .name{font-weight:800;font-size:1.08rem;display:flex;align-items:center;gap:7px}
+.person .sub{font-size:.84rem;color:var(--muted)}
+.person .go{color:var(--muted)}
+.person.off{opacity:.65}
+
+.tag{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 10px;font-weight:800;font-size:.76rem;white-space:nowrap;justify-self:start}
+.tag svg{width:13px;height:13px}
+.tag.paid{background:var(--ok-soft);color:var(--ok)}
+.tag.due{background:var(--gold-soft);color:var(--gold-ink)}
+.tag.part{background:var(--part-soft);color:var(--part)}
+
+/* scheda header */
+.head{border-radius:24px;padding:20px;color:var(--hero-fg);background:radial-gradient(120% 140% at 100% 0%,var(--hero-2) 0%,var(--hero-1) 62%);position:relative;overflow:hidden;display:grid;gap:16px}
+.head::after{content:"";position:absolute;right:-46px;top:-46px;width:170px;height:170px;border-radius:50%;border:26px solid rgba(255,189,72,.15);pointer-events:none}
+.head-top{display:flex;align-items:center;gap:14px;position:relative;z-index:1}
+.head-top .t{min-width:0}
+.head .name{font-family:var(--f-display);font-weight:700;font-size:1.45rem;letter-spacing:-.02em;line-height:1.15}
+.head .sub{color:var(--hero-muted);font-size:.9rem;margin-top:2px}
+.head-actions{display:flex;gap:8px;flex-wrap:wrap;position:relative;z-index:1}
+.hbtn{height:38px;padding:0 12px;border-radius:12px;background:rgba(255,255,255,.14);color:var(--hero-fg);font-weight:700;font-size:.86rem;display:inline-flex;align-items:center;gap:6px}
+.hbtn svg{width:16px;height:16px}
+.hbtn.on{background:rgba(159,240,200,.22)}
+
+/* month card */
+.month{padding:16px;display:grid;gap:12px}
+.m-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.m-name{font-family:var(--f-display);font-weight:700;font-size:1.02rem;letter-spacing:-.01em}
+.figs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fig{background:var(--bg);border-radius:14px;padding:10px 12px;min-width:0}
+.fig .k{font-size:.7rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.fig .v{font-weight:800;font-size:1rem;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fig.res .v{color:var(--gold-ink)}
+.fig.res.zero .v{color:var(--ok)}
+.auto{font-size:.62rem;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:0 4px;vertical-align:2px;margin-left:3px}
+.bar{height:6px;border-radius:6px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);border-radius:6px}
+.pays{display:grid;gap:0;border-top:1px solid var(--line)}
+.pay{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.92rem}
+.pay:last-child{border-bottom:0}
+.pay .d{flex:1;min-width:0;color:var(--muted);font-weight:600}
+.pay .d small{display:block;font-weight:500;font-size:.78rem}
+.pay .a{font-weight:800}
+.pay .x{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--muted)}
+.pay .x svg{width:16px;height:16px}
+.pay .x.armed{background:var(--danger);color:var(--surface);width:auto;padding:0 10px;font-weight:700;font-size:.8rem}
+.no-pay{font-size:.86rem;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+.m-actions{display:grid;grid-template-columns:1fr 1fr auto;gap:8px}
+
+.btn{height:44px;padding:0 14px;border-radius:12px;font-weight:700;background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:.9rem;white-space:nowrap}
+.btn.primary{background:var(--brand);color:var(--brand-fg)}
+.btn.ok{background:var(--ok);color:var(--surface)}
+.btn.gold{background:var(--gold);color:#2a1a00}
+.btn.danger{color:var(--danger);background:transparent}
+.btn.danger.armed{background:var(--danger);color:var(--surface)}
+.btn.block{width:100%}
+.btn.icon{width:44px;padding:0}
+.btn svg{width:18px;height:18px}
+
+.notice{background:var(--gold-soft);border-radius:18px;padding:14px 16px;display:grid;gap:10px}
+.notice h3{margin:0;font-size:.95rem;color:var(--gold-ink)}
+.req{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.req .who{flex:1 1 100%;font-weight:700}
+.req .who small{display:block;font-weight:500;color:var(--muted);font-size:.78rem}
+select,input[type=text],input[type=number],input[type=date]{font:inherit;font-size:16px;height:48px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:12px;padding:0 12px;width:100%;min-width:0}
+.req select{flex:1;width:auto;height:40px}
+.req .btn{height:40px}
+details.help{background:var(--surface);border-radius:18px;padding:4px 16px;box-shadow:var(--shadow);font-size:.9rem;color:var(--muted)}
+details.help summary{cursor:pointer;font-weight:700;color:var(--fg);padding:12px 0;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.help summary::-webkit-details-marker{display:none}
+details.help ol{margin:0 0 14px;padding-left:20px;display:grid;gap:6px}
+.empty-state{padding:28px 20px;text-align:center;color:var(--muted)}
+.empty-state strong{display:block;color:var(--fg);font-size:1.05rem;margin-bottom:4px}
+.preview-bar{background:var(--fg);color:var(--bg);border-radius:14px;padding:8px 8px 8px 16px;display:flex;align-items:center;gap:10px;font-size:.88rem;font-weight:600}
+.preview-bar span{flex:1}
+.preview-bar button{background:var(--bg);color:var(--fg);border-radius:10px;height:36px;padding:0 14px;font-weight:700}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92rem;background:var(--surface-2);border-radius:12px;padding:12px;word-break:break-all;user-select:all}
+.muted{color:var(--muted);font-size:.86rem}
+
+dialog.sheet{border:0;padding:0;width:100%;max-width:520px;max-height:92vh;margin:auto auto 0;border-radius:26px 26px 0 0;background:var(--surface);color:var(--fg);box-shadow:0 -10px 40px rgba(0,0,0,.25)}
+dialog.sheet[open]{animation:up .24s cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+dialog.sheet::backdrop{background:rgba(4,14,13,.5)}
+@media (min-width:640px){dialog.sheet{margin:auto;border-radius:26px}}
+.sheet form,.sheet .body{padding:10px 20px calc(20px + env(safe-area-inset-bottom,0px));display:grid;gap:14px}
+.grab{width:40px;height:5px;border-radius:5px;background:var(--line);margin:10px auto 0}
+.sheet h3{font-family:var(--f-display);font-size:1.15rem;margin:4px 0 0;letter-spacing:-.01em}
+.sheet .sub{color:var(--muted);font-size:.88rem;margin-top:-8px}
+.field{display:grid;gap:6px;min-width:0}
+.field label{font-size:.82rem;font-weight:700;color:var(--muted)}
+.field .hint{font-size:.8rem;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quick{display:flex;gap:8px;flex-wrap:wrap}
+.quick button{height:34px;padding:0 12px;border-radius:999px;background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:.84rem}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--bg);border-radius:14px;padding:0 14px;height:54px;font-weight:700}
+.switch input{width:22px;height:22px;accent-color:var(--ok)}
+.sheet-actions{display:flex;gap:8px;align-items:center}
+.sheet-actions .grow{flex:1}
+
+.toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(16px);background:var(--fg);color:var(--bg);padding:11px 18px;border-radius:999px;font-weight:700;font-size:.9rem;opacity:0;pointer-events:none;transition:.2s;z-index:60;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (max-width:380px){.figs{grid-template-columns:1fr 1fr}.fig.res{grid-column:1/-1}.m-actions{grid-template-columns:1fr 1fr}.m-actions .icon{grid-column:1/-1;width:100%}}
+@media (prefers-reduced-motion:reduce){.toast,dialog.sheet[open]{transition:none;animation:none}}
+</style>
+
+<style>
+html,body{min-height:100%}
+.login{padding:20px;display:grid;gap:14px}
+.err{color:var(--danger);font-weight:700;font-size:.9rem}
+.logout{height:36px;padding:0 12px;border-radius:10px;background:var(--surface);box-shadow:var(--shadow);font-weight:700;font-size:.86rem}
+.pay{width:100%}
+.foot{text-align:center;color:var(--muted);font-size:.8rem}
+</style>
+</head>
+<body>
+<header class="topbar gutter">
+  <div class="col">
+    <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2Zm0 0A2 2 0 0 0 6 22h13"/></svg></span><span>La mia scheda</span></div>
+    <div id="right"></div>
+  </div>
+</header>
+<main class="col gutter" id="view"></main>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const eur=new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',minimumFractionDigits:0,maximumFractionDigits:2});
+const fmt=n=>n==null?'—':eur.format(n);
+const r2=n=>Math.round(n*100)/100;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MONTHS=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const monthLabel=m=>{const [y,mm]=m.split('-');return MONTHS[+mm-1]+' '+y};
+const dateLabel=d=>d?new Date(d+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'}):'Data non registrata';
+const pct=r=>(Math.round((r||0)*1000)/10).toString().replace('.',',')+'%';
+const I={
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+  user:'<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4.2 4-6.5 8-6.5s7.2 2.3 8 6.5"/></svg>',
+};
+const paidOf=e=>r2((e.payments||[]).reduce((a,p)=>a+(+p.amount||0),0));
+const restOf=e=>Math.max(0,r2((e.commission||0)-paidOf(e)));
+function stateOf(e){const c=e.commission||0,p=paidOf(e);if(c<=0||p>=c-0.005)return 'paid';return p>0?'part':'due'}
+const tag=st=>st==='paid'?`<span class="tag paid">${I.check}Pagato</span>`:st==='part'?`<span class="tag part">Parziale</span>`:`<span class="tag due">Da pagare</span>`;
+const initials=n=>String(n||'?').replace(/[^\p{L}\s]/gu,'').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?';
+const avColor=o=>`var(--av${(((o??1)-1)%5+5)%5+1})`;
+
+const te=new TextEncoder(),td=new TextDecoder();
+const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const normUser=u=>String(u||'').trim().toLowerCase();
+async function portalId(u){const h=await crypto.subtle.digest('SHA-256',te.encode('libri-commissioni:'+normUser(u)));return 'p'+[...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,40)}
+async function unseal(doc,u,p){
+  const base=await crypto.subtle.importKey('raw',te.encode(normUser(u)+':'+p),'PBKDF2',false,['deriveKey']);
+  const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:unb64(doc.salt),iterations:250000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+  return JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(doc.iv)},key,unb64(doc.data))));
+}
+async function loadData(){const r=await fetch('dati.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('net');return r.json()}
+
+function viewLogin(){
+  let u='';try{u=localStorage.getItem('lc-user')||''}catch(e){}
+  return `<section class="head"><div class="head-top"><span class="av xl" style="background:rgba(255,255,255,.16)">${I.user}</span><div class="t"><div class="name">Le tue commissioni</div><div class="sub">Entra con lo username e la password che hai ricevuto.</div></div></div></section>
+  <section class="card"><form class="login" id="f-login">
+    <div class="field"><label for="l-user">Username</label><input type="text" id="l-user" autocomplete="username" autocapitalize="off" spellcheck="false" value="${esc(u)}" required></div>
+    <div class="field"><label for="l-pass">Password</label><input type="password" id="l-pass" autocomplete="current-password" required></div>
+    <div class="err" id="l-err" hidden></div>
+    <button class="btn primary block" type="submit" id="l-go">Entra</button>
+  </form></section>`;
+}
+function viewSheet(d,updated){
+  const es=(d.entries||[]).slice().sort((a,b)=>b.month.localeCompare(a.month));
+  let h=`<section class="head"><div class="head-top"><span class="av xl" style="background:${avColor(d.order)}">${esc(initials(d.name))}</span><div class="t"><div class="name">${esc(d.name)}</div><div class="sub">Commissione ${pct(d.rate)} sulle vendite</div></div></div></section>`;
+  if(!es.length) return h+`<section class="card"><div class="empty-state"><strong>Nessun mese registrato</strong>Qui vedrai le tue vendite e commissioni mese per mese.</div></section>`;
+  for(const e of es){
+    const c=e.commission||0,paid=paidOf(e),rest=restOf(e),pays=e.payments||[];
+    h+=`<section class="card month">
+      <div class="m-top"><span class="m-name">${monthLabel(e.month)}</span>${tag(stateOf(e))}</div>
+      <div class="figs num">
+        <div class="fig"><div class="k">Vendite</div><div class="v">${fmt(e.sales)}</div></div>
+        <div class="fig"><div class="k">Commissione</div><div class="v">${fmt(c)}</div></div>
+        <div class="fig res ${rest?'':'zero'}"><div class="k">Residuo</div><div class="v">${fmt(rest)}</div></div>
+      </div>
+      ${c>0?`<div class="bar" aria-hidden="true"><i style="width:${Math.min(100,paid/c*100)}%"></i></div>`:''}
+      ${pays.length?`<div class="pays">${pays.map(p=>`<div class="pay num"><span class="d">${p.legacy?'Pagato':dateLabel(p.date)}${p.legacy?'<small>Data non registrata</small>':''}</span><span class="a">${fmt(+p.amount)}</span></div>`).join('')}</div>`:`<div class="no-pay">Nessun pagamento ancora.</div>`}
+    </section>`;
+  }
+  if(updated) h+=`<p class="foot">Dati aggiornati il ${new Date(updated).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</p>`;
+  return h;
+}
+function show(d,updated){
+  $('#view').innerHTML=d?viewSheet(d,updated):viewLogin();
+  $('#right').innerHTML=d?`<button class="logout" type="button" id="out">Esci</button>`:'';
+  if(d){$('#out').onclick=()=>{try{sessionStorage.removeItem('lc-sess')}catch(e){}show(null)};window.scrollTo({top:0});return}
+  $('#f-login').addEventListener('submit',async ev=>{
+    ev.preventDefault();
+    const u=$('#l-user').value,p=$('#l-pass').value,err=$('#l-err'),go=$('#l-go');
+    err.hidden=true;go.disabled=true;go.textContent='Verifico…';
+    try{
+      const ok=await login(u,p);
+      if(!ok){err.textContent='Username o password non corretti.';err.hidden=false}
+    }catch(e){err.textContent='Connessione non riuscita, riprova.';err.hidden=false}
+    go.disabled=false;go.textContent='Entra';
+  });
+}
+async function login(u,p){
+  const all=await loadData();
+  const rec=all.users&&all.users[await portalId(u)];
+  if(!rec) return false;
+  let d; try{d=await unseal(rec,u,p)}catch(e){return false}
+  try{localStorage.setItem('lc-user',normUser(u));sessionStorage.setItem('lc-sess',JSON.stringify([u,p]))}catch(e){}
+  show(d,all.updatedAt); return true;
+}
+(async()=>{
+  let s=null;try{s=JSON.parse(sessionStorage.getItem('lc-sess')||'null')}catch(e){}
+  if(s){try{if(await login(s[0],s[1]))return}catch(e){}}
+  show(null);
+})();
+})();
+</script>
+</body>
+</html>
