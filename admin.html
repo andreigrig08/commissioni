@@ -397,6 +397,7 @@ function armOnce(btn,label){if(btn.classList.contains('armed'))return true;btn.c
 function disarm(btn){if(btn.dataset.orig)btn.textContent=btn.dataset.orig;btn.classList.remove('armed')}
 
 const normUser=u=>String(u||'').trim().toLowerCase();
+const simplePw=n=>{const w=String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').match(/[a-z]+/);return (w?w[0]:'cliente')+'123'};
 function genPassword(){const a='abcdefghjkmnpqrstuvwxyz23456789';const r=crypto.getRandomValues(new Uint8Array(8));return [...r].map(x=>a[x%a.length]).join('')}
 
 /* ---------- views ---------- */
@@ -688,12 +689,12 @@ function openAccess(pid){
   const sug=normUser(p.name).normalize('NFD').replace(/[^a-z0-9]+/g,'.').replace(/^\.|\.$/g,'');
   $('#access-body').innerHTML=p.login?`<h3>Accesso di ${esc(p.name)}</h3>
       <div class="cred">Username: <b>${esc(p.login)}</b><span class="muted">La password la gestisce ${esc(p.name)}: può cambiarla quando vuole.</span></div>
-      <div class="field"><label for="a-pass">Se l'ha dimenticata, scegli una nuova password</label><div class="pw"><input type="text" id="a-pass" autocomplete="off" autocapitalize="off" spellcheck="false" value="${genPassword()}"><button class="btn" type="button" id="a-gen">Genera</button></div></div>
+      <div class="field"><label for="a-pass">Se l'ha dimenticata, scegli una nuova password</label><div class="pw"><input type="text" id="a-pass" autocomplete="off" autocapitalize="off" spellcheck="false" value="${simplePw(p.name)}"><button class="btn" type="button" id="a-gen">Casuale</button></div></div>
       <div class="err" id="a-err" hidden></div>
       <div class="sheet-actions"><button class="btn danger" type="button" id="a-off">Disattiva</button><span class="grow"></span><button class="btn" type="button" data-close>Chiudi</button><button class="btn primary" type="button" id="a-go">Nuova password</button></div>`
     :`<h3>Accesso di ${esc(p.name)}</h3><div class="sub">Crea username e password iniziale. Dopo potrà cambiarla da solo.</div>
       <div class="field"><label for="a-user">Username</label><input type="text" id="a-user" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(sug)}"></div>
-      <div class="field"><label for="a-pass">Password iniziale</label><div class="pw"><input type="text" id="a-pass" autocomplete="off" autocapitalize="off" spellcheck="false" value="${genPassword()}"><button class="btn" type="button" id="a-gen">Genera</button></div></div>
+      <div class="field"><label for="a-pass">Password iniziale</label><div class="pw"><input type="text" id="a-pass" autocomplete="off" autocapitalize="off" spellcheck="false" value="${simplePw(p.name)}"><button class="btn" type="button" id="a-gen">Casuale</button></div></div>
       <div class="err" id="a-err" hidden></div>
       <div class="sheet-actions"><span class="grow"></span><button class="btn" type="button" data-close>Annulla</button><button class="btn primary" type="button" id="a-go">Crea accesso</button></div>`;
   dA.showModal();
