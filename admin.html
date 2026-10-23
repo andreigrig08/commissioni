@@ -552,9 +552,9 @@ function openEntry(id,pid){
   let def=e?e.month:null;
   if(!def){const last=entriesOf(pid)[0];def=last?nextMonth(last.month):nowMonth();if(used.has(def))def=opts.find(m=>!used.has(m))||def}
   $('#e-month').innerHTML=opts.map(m=>`<option value="${m}" ${used.has(m)&&(!e||m!==e.month)?'disabled':''}>${monthLabel(m)}${used.has(m)&&(!e||m!==e.month)?' (già inserito)':''}</option>`).join('');
-  $('#e-month').value=def; $('#e-month').disabled=!!e;
+  $('#e-month').value=def; $('#e-month').disabled=false;
   ctx={id,person:pid,rate:e?(e.rate??p.rate):p.rate};
-  $('#e-title').textContent=e?'Modifica importi':'Aggiungi mese'; $('#e-sub').textContent=e?`${p.name} · ${monthLabel(e.month)}`:p.name;
+  $('#e-title').textContent=e?'Modifica mese':'Aggiungi mese'; $('#e-sub').textContent=e?`${p.name} · ${monthLabel(e.month)}`:p.name;
   $('#e-sales').value=e?euroIn(e.sales):''; $('#e-comm').value=e?euroIn(e.commission):'';
   $('#e-del').hidden=!e; disarm($('#e-del'));
   updateHint(); dE.showModal();
@@ -576,12 +576,13 @@ $('#f-entry').addEventListener('submit',async ev=>{
   if(sales==null||isNaN(sales)){toast('Inserisci le vendite');$('#e-sales').focus();return}
   if(comm!=null&&isNaN(comm)){toast('Commissione non valida');$('#e-comm').focus();return}
   const prev=ctx.id?S.entries[ctx.id]:null;
-  const month=prev?prev.month:$('#e-month').value;
-  const id=ctx.id||`${month}_${ctx.person}`;
+  const month=$('#e-month').value;
+  const id=`${month}_${ctx.person}`, oldId=ctx.id&&ctx.id!==id?ctx.id:null;
+  if(oldId&&S.entries[id]){toast('Quel mese esiste già per questa persona');return}
   const doc={month,person:ctx.person,rate:ctx.rate,sales:r2(sales),commission:comm==null?null:r2(comm),payments:prev?plainPays(prev):[]};
   doc.paid=stateOf(doc)==='paid';
-  S.entries[id]=doc; dE.close(); render();
-  if(await write(()=>db.collection('entries').doc(id).set(doc),'Salvato')) scheduleSync(ctx.person);
+  S.entries[id]=doc; if(oldId) delete S.entries[oldId]; dE.close(); render();
+  if(await write(()=>db.collection('entries').doc(id).set(doc),oldId?'Mese spostato a '+monthLabel(month):'Salvato')){if(oldId) await write(()=>db.collection('entries').doc(oldId).delete())}
 });
 
 /* ---------- new month for everyone ---------- */
