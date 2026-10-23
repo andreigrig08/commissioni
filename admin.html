@@ -185,6 +185,13 @@ dialog.sheet::backdrop{background:rgba(4,14,13,.5)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media (max-width:380px){.figs{grid-template-columns:1fr 1fr}.fig.res{grid-column:1/-1}.m-actions{grid-template-columns:1fr 1fr}.m-actions .icon{grid-column:1/-1;width:100%}}
 @media (prefers-reduced-motion:reduce){.toast,dialog.sheet[open]{transition:none;animation:none}}
+.note-card{background:var(--gold-soft);border-radius:18px;padding:14px 16px;display:grid;gap:6px;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--gold) 55%,transparent)}
+.note-card .nk{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--gold-ink)}
+.note-card .nt{white-space:pre-wrap;word-break:break-word;font-size:.98rem}
+.note-card.empty{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+.note-card.empty .nt{color:var(--muted)}
+button.note-card{width:100%;text-align:left}
+textarea{font:inherit;font-size:16px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:12px;padding:12px;width:100%;min-height:130px;resize:vertical}
 </style>
 
 </head>
@@ -285,6 +292,21 @@ dialog.sheet::backdrop{background:rgba(4,14,13,.5)}
     <label class="switch" for="p-active">Attivo<input type="checkbox" id="p-active" checked></label>
     <div class="sheet-actions">
       <button class="btn danger" type="button" id="p-del">Elimina persona</button>
+      <span class="grow"></span>
+      <button class="btn" type="button" data-close>Annulla</button>
+      <button class="btn primary" type="submit">Salva</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="sheet" id="dlg-note">
+  <div class="grab"></div>
+  <form id="f-note">
+    <h3 id="n-title">Nota</h3>
+    <div class="sub">La vede il cliente in cima alla sua scheda, appena la salvi.</div>
+    <div class="field"><label for="n-text">Testo della nota</label><textarea id="n-text" maxlength="2000" placeholder="es. Il pagamento di novembre arriva entro il 15."></textarea></div>
+    <div class="sheet-actions">
+      <button class="btn danger" type="button" id="n-del">Elimina nota</button>
       <span class="grow"></span>
       <button class="btn" type="button" data-close>Annulla</button>
       <button class="btn primary" type="submit">Salva</button>
@@ -409,6 +431,8 @@ function viewSheet(m,{editable,preview}){
       <button class="hbtn ${m.login?'on':''}" type="button" data-access="${m.pid}">${I.lock}${m.login?'Accesso attivo':'Accesso'}</button>
       <button class="hbtn" type="button" data-preview="1">${I.eye}Vista cliente</button></div>`;
   h+=`</section>`;
+  if(editable) h+=`<button class="note-card ${m.note?'':'empty'}" type="button" data-note="${m.pid}"><div class="nk">${m.note?'Nota per il cliente · tocca per modificare':'Nota per il cliente'}</div><div class="nt">${m.note?esc(m.note):'Nessuna nota. Tocca per scriverne una: il cliente la vedrà in cima alla sua scheda.'}</div></button>`;
+  else h+=(m.note?`<section class="note-card"><div class="nk">Nota</div><div class="nt">${esc(m.note)}</div></section>`:'');
   if(editable) h+=`<button class="btn gold block" type="button" data-newmonth="${m.pid}">${I.plus}Aggiungi mese</button>`;
   if(!m.entries.length) return h+`<section class="card"><div class="empty-state"><strong>Nessun mese registrato</strong>${editable?'Tocca “Aggiungi mese” per inserire le vendite.':'Qui vedrai le tue vendite e commissioni mese per mese.'}</div></section>`;
   for(const e of m.entries){
@@ -436,10 +460,10 @@ function viewSheet(m,{editable,preview}){
 }
 function clientDocFor(pid){
   const p=S.people[pid]; if(!p) return null;
-  return {person:pid,name:p.name,rate:p.rate,order:p.order??null,updatedAt:new Date().toISOString(),
+  return {person:pid,name:p.name,rate:p.rate,order:p.order??null,note:p.note||'',updatedAt:new Date().toISOString(),
     entries:entriesOf(pid).map(e=>({month:e.month,sales:e.sales??null,commission:commOf(e),payments:paysOf(e).map(x=>({amount:+x.amount,date:x.date||null,...(x.legacy?{legacy:true}:{})}))}))};
 }
-const docToModel=d=>({pid:d.person,name:d.name,rate:d.rate,order:d.order,entries:(d.entries||[]).slice().sort((a,b)=>b.month.localeCompare(a.month)).map(e=>({...e,id:e.month}))});
+const docToModel=d=>({pid:d.person,name:d.name,rate:d.rate,order:d.order,note:d.note,entries:(d.entries||[]).slice().sort((a,b)=>b.month.localeCompare(a.month)).map(e=>({...e,id:e.month}))});
 
 function viewLogin(){
   return `<section class="head"><div class="head-top"><span class="av xl" style="background:rgba(255,255,255,.16)">${I.lock}</span><div class="t"><div class="name">Area admin</div><div class="sub">Entra per gestire schede, mesi e pagamenti.</div></div></div></section>
@@ -724,10 +748,21 @@ async function importData(){
   }catch(e){console.error(e);toast('Import non riuscito');if(btn){btn.disabled=false;btn.textContent='Importa i dati'}}
 }
 
+/* ---------- note ---------- */
+const dN=$('#dlg-note'); let nctx=null;
+function openNote(pid){const p=S.people[pid];if(!p)return;nctx=pid;$('#n-title').textContent='Nota per '+p.name;$('#n-text').value=p.note||'';$('#n-del').hidden=!p.note;disarm($('#n-del'));dN.showModal();setTimeout(()=>$('#n-text').focus(),50)}
+async function saveNote(pid,text){
+  const p=S.people[pid]; if(!p) return;
+  S.people[pid]={...p,note:text}; render();
+  await write(()=>db.collection('people').doc(pid).update({note:text}),text?'Nota salvata':'Nota eliminata');
+}
+$('#f-note').addEventListener('submit',ev=>{ev.preventDefault();dN.close();saveNote(nctx,$('#n-text').value.trim())});
+$('#n-del').onclick=()=>{if(!armOnce($('#n-del'),'Conferma'))return;dN.close();saveNote(nctx,'')};
+
 /* ---------- events ---------- */
 document.addEventListener('click',ev=>{
   const c=ev.target.closest('[data-close]'); if(c){c.closest('dialog').close();return}
-  const b=ev.target.closest('[data-back],[data-open],[data-addperson],[data-editperson],[data-access],[data-preview],[data-exitpreview],[data-newmonth],[data-bulk],[data-edit],[data-pay],[data-settle],[data-editpay],[data-logout],[data-import]');
+  const b=ev.target.closest('[data-back],[data-open],[data-addperson],[data-editperson],[data-access],[data-preview],[data-exitpreview],[data-newmonth],[data-bulk],[data-edit],[data-pay],[data-settle],[data-editpay],[data-logout],[data-import],[data-note]');
   if(!b) return; const d=b.dataset;
   if(d.back) closeSheet();
   else if(d.open) openSheet(d.open);
@@ -744,6 +779,7 @@ document.addEventListener('click',ev=>{
   else if(d.settle){const e=S.entries[d.settle];const rest=restOf(e);if(rest>0){const pays=plainPays(e);pays.push({amount:rest,date:today()});savePayments(d.settle,pays,'Mese saldato')}}
   else if(d.logout){signOut(auth)}
   else if(d.import) importData();
+  else if(d.note) openNote(d.note);
 });
 for(const d of document.querySelectorAll('dialog.sheet')) d.addEventListener('click',ev=>{if(ev.target===d)d.close()});
 

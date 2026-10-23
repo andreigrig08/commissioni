@@ -185,6 +185,13 @@ dialog.sheet::backdrop{background:rgba(4,14,13,.5)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media (max-width:380px){.figs{grid-template-columns:1fr 1fr}.fig.res{grid-column:1/-1}.m-actions{grid-template-columns:1fr 1fr}.m-actions .icon{grid-column:1/-1;width:100%}}
 @media (prefers-reduced-motion:reduce){.toast,dialog.sheet[open]{transition:none;animation:none}}
+.note-card{background:var(--gold-soft);border-radius:18px;padding:14px 16px;display:grid;gap:6px;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--gold) 55%,transparent)}
+.note-card .nk{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--gold-ink)}
+.note-card .nt{white-space:pre-wrap;word-break:break-word;font-size:.98rem}
+.note-card.empty{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+.note-card.empty .nt{color:var(--muted)}
+button.note-card{width:100%;text-align:left}
+textarea{font:inherit;font-size:16px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:12px;padding:12px;width:100%;min-height:130px;resize:vertical}
 </style>
 
 <style>
@@ -271,6 +278,7 @@ function viewSheet(){
   const d=S.person; if(!d) return `<section class="card"><div class="empty-state"><strong>Caricamento…</strong></div></section>`;
   const es=S.entries.filter(e=>e.sales!=null||e.commission!=null).sort((a,b)=>b.month.localeCompare(a.month));
   let h=`<section class="head"><div class="head-top"><span class="av xl" style="background:${avColor(d.order)}">${esc(initials(d.name))}</span><div class="t"><div class="name">${esc(d.name)}</div><div class="sub">Commissione ${pct(d.rate)} sulle vendite</div></div></div></section>`;
+  if(d.note) h+=`<section class="note-card"><div class="nk">Nota</div><div class="nt">${esc(d.note)}</div></section>`;
   if(!es.length) return h+`<section class="card"><div class="empty-state"><strong>Nessun mese registrato</strong>Qui vedrai le tue vendite e commissioni mese per mese.</div></section>`;
   for(const e of es){
     const c=commOf(e),paid=paidOf(e),rest=restOf(e),pays=paysOf(e);
