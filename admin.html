@@ -579,7 +579,7 @@ function bindLogin(){
 async function write(fn,okMsg){
   if(!db){toast('Salvataggio non disponibile qui');return false}
   try{await fn();if(okMsg)toast(okMsg);return true}
-  catch(e){console.error(e);toast(e&&e.code==='permission-denied'?'Non hai i permessi per questa modifica':e&&e.code==='resource-exhausted'?'Limite gratuito raggiunto per oggi':'Non salvato, riprova');return false}
+  catch(e){console.error(e);toast(e&&e.code==='permission-denied'?'Non salvato: sessione admin scaduta, esci e rientra':e&&e.code==='resource-exhausted'?'Limite gratuito raggiunto per oggi':'Non salvato ('+((e&&e.code)||'errore')+'), riprova');return false}
 }
 /* Clients read the same live database: nothing to sync. */
 function scheduleSync(){}
@@ -633,7 +633,8 @@ $('#f-entry').addEventListener('submit',async ev=>{
   if(sales==null||isNaN(sales)){toast('Inserisci le vendite');$('#e-sales').focus();return}
   if(comm!=null&&isNaN(comm)){toast('Commissione non valida');$('#e-comm').focus();return}
   const prev=ctx.id?S.entries[ctx.id]:null;
-  const month=$('#e-month').value;
+  const month=$('#e-month').value||(prev&&prev.month);
+  if(!month){toast('Scegli il mese');return}
   const id=`${month}_${ctx.person}`, oldId=ctx.id&&ctx.id!==id?ctx.id:null;
   if(oldId&&S.entries[id]){toast('Quel mese esiste già per questa persona');return}
   const doc={month,person:ctx.person,rate:ctx.rate,sales:r2(sales),commission:comm==null?null:r2(comm),payments:prev?plainPays(prev):[]};
@@ -698,9 +699,9 @@ $('#f-pay').addEventListener('submit',ev=>{
   ev.preventDefault();
   const amt=parseEuro($('#y-amount').value), date=$('#y-date').value;
   if(amt==null||isNaN(amt)||amt<=0){toast('Inserisci un importo');$('#y-amount').focus();return}
-  if(!date){toast('Scegli la data');return}
+  if(!date&&yctx.index==null){toast('Scegli la data');$('#y-date').focus();return}
   const e=S.entries[yctx.id]; const pays=plainPays(e); dY.close();
-  if(yctx.index!=null){pays[yctx.index]={amount:amt,date};savePayments(yctx.id,pays,'Pagamento modificato')}
+  if(yctx.index!=null){pays[yctx.index]={amount:amt,date:date||null};savePayments(yctx.id,pays,'Pagamento modificato')}
   else{const full=amt>=restOf(e)-0.005;pays.push({amount:amt,date});savePayments(yctx.id,pays,full?'Mese saldato':'Pagamento parziale registrato')}
 });
 
