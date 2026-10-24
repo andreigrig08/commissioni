@@ -192,6 +192,21 @@ dialog.sheet::backdrop{background:rgba(4,14,13,.5)}
 .note-card.empty .nt{color:var(--muted)}
 button.note-card{width:100%;text-align:left}
 textarea{font:inherit;font-size:16px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:12px;padding:12px;width:100%;min-height:130px;resize:vertical}
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px}
+.sum .fig{background:var(--bg)}
+.sum .fig.big{grid-column:1/-1;background:var(--brand-soft)}
+.sum .fig.big .v{font-family:var(--f-display);font-size:1.3rem;color:var(--brand)}
+.sum .fig.big.zero .v{color:var(--ok)}
+.due-card{display:flex;align-items:center;gap:12px;padding:14px 16px;width:100%;text-align:left;background:var(--surface);border-radius:18px;box-shadow:var(--shadow)}
+.due-card .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand);flex:none}
+.due-card .ic svg{width:22px;height:22px}
+.due-card .t{flex:1;min-width:0}
+.due-card .k{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.due-card .d{font-weight:800;font-size:1.05rem}
+.due-card .w{font-size:.84rem;color:var(--muted)}
+.due-card.late .ic{background:var(--gold-soft);color:var(--gold-ink)}
+.due-card.late .w{color:var(--gold-ink);font-weight:700}
+.due-card.empty{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
 </style>
 
 <style>
@@ -260,6 +275,27 @@ const avColor=o=>`var(--av${(((o??1)-1)%5+5)%5+1})`;
 const normUser=u=>String(u||'').trim().toLowerCase();
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2200)}
 
+
+const CAL_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>';
+function dueInfo(d){
+  if(!d) return null;
+  const t=new Date();t.setHours(12,0,0,0);
+  const x=new Date(d+'T12:00:00');
+  const days=Math.round((x-t)/86400000);
+  const w=days===0?'Oggi':days===1?'Domani':days>1?`Tra ${days} giorni`:days===-1?'Era ieri':`Passata da ${-days} giorni`;
+  return {label:x.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),w,late:days<0};
+}
+function summaryHTML(list){
+  let s=0,c=0,p=0;for(const e of list){s+=e.sales||0;c+=commOf(e);p+=paidOf(e)}
+  const rest=Math.max(0,r2(c-p));
+  return `<section class="card sum num">
+    <div class="fig"><div class="k">Incasso totale</div><div class="v">${fmt(r2(s))}</div></div>
+    <div class="fig"><div class="k">Commissioni totali</div><div class="v">${fmt(r2(c))}</div></div>
+    <div class="fig"><div class="k">Già pagato</div><div class="v">${fmt(r2(p))}</div></div>
+    <div class="fig"><div class="k">Mesi</div><div class="v">${list.length}</div></div>
+    <div class="fig big ${rest?'':'zero'}"><div class="k">Da ricevere</div><div class="v">${fmt(rest)}</div></div>
+  </section>`;
+}
 const S={person:null,entries:[]};
 let unsubs=[];
 
@@ -279,6 +315,8 @@ function viewSheet(){
   const es=S.entries.filter(e=>e.sales!=null||e.commission!=null).sort((a,b)=>b.month.localeCompare(a.month));
   let h=`<section class="head"><div class="head-top"><span class="av xl" style="background:${avColor(d.order)}">${esc(initials(d.name))}</span><div class="t"><div class="name">${esc(d.name)}</div><div class="sub">Commissione ${pct(d.rate)} sulle vendite</div></div></div></section>`;
   if(d.note) h+=`<section class="note-card"><div class="nk">Nota</div><div class="nt">${esc(d.note)}</div></section>`;
+  {const di=dueInfo(d.nextDue);if(di) h+=`<section class="due-card ${di.late?'late':''}"><span class="ic">${CAL_ICON}</span><span class="t"><div class="k">Prossima scadenza</div><div class="d">${di.label}</div><div class="w">${di.w}</div></span></section>`;}
+  if(es.length) h+=summaryHTML(es);
   if(!es.length) return h+`<section class="card"><div class="empty-state"><strong>Nessun mese registrato</strong>Qui vedrai le tue vendite e commissioni mese per mese.</div></section>`;
   for(const e of es){
     const c=commOf(e),paid=paidOf(e),rest=restOf(e),pays=paysOf(e);
